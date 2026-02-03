@@ -1,0 +1,1945 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ARYZE Factory V1 - Admin UI</title>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@6.9.0/dist/ethers.umd.min.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh; color: #333; padding: 20px;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        h1 { text-align: center; margin-bottom: 10px; color: #1a1a2e; font-size: 2em; }
+        .subtitle { text-align: center; color: #666; margin-bottom: 30px; }
+
+        .connection-bar {
+            background: #fff; border-radius: 12px; padding: 20px;
+            margin-bottom: 20px; display: flex; gap: 15px; align-items: center; flex-wrap: wrap;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .connection-bar input {
+            flex: 1; min-width: 300px; padding: 12px; border-radius: 8px;
+            border: 1px solid #ddd; background: #fafafa; color: #333;
+        }
+        .connection-bar button {
+            padding: 12px 24px; border-radius: 8px; border: none;
+            background: #6366f1; color: #fff; cursor: pointer; font-weight: 600;
+        }
+        .connection-bar button:hover { background: #5558e3; }
+        .status { padding: 8px 16px; border-radius: 20px; font-size: 0.85em; }
+        .status.connected { background: #dcfce7; color: #16a34a; }
+        .status.disconnected { background: #fee2e2; color: #dc2626; }
+
+        .roles-bar {
+            background: #fff; border-radius: 8px; padding: 12px 16px;
+            margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .roles-bar .label { color: #666; font-size: 0.85em; margin-right: 5px; }
+        .role-badge {
+            padding: 4px 10px; border-radius: 12px; font-size: 0.75em; font-weight: 500;
+        }
+        .role-badge.active { background: #dcfce7; color: #16a34a; }
+        .role-badge.inactive { background: #f3f4f6; color: #9ca3af; }
+
+        .beacon-status {
+            background: #fff; border-radius: 12px; padding: 15px 20px;
+            margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .beacon-status.not-initialized { border: 2px solid #f59e0b; }
+        .beacon-status.initialized { border: 2px solid #22c55e; }
+        .beacon-status .status-text { font-size: 0.95em; }
+        .beacon-status .status-icon { font-size: 1.5em; }
+
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 20px; }
+
+        .card {
+            background: #fff; border-radius: 12px; padding: 20px;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .card.disabled { opacity: 0.5; pointer-events: none; }
+        .card h2 {
+            font-size: 1.1em; margin-bottom: 15px; color: #4f46e5;
+            border-bottom: 1px solid #e5e7eb; padding-bottom: 10px;
+        }
+        .card h3 { font-size: 0.95em; margin: 15px 0 10px; color: #666; }
+
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; margin-bottom: 5px; color: #555; font-size: 0.85em; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; padding: 10px; border-radius: 6px;
+            border: 1px solid #ddd; background: #fafafa; color: #333;
+            font-family: inherit;
+        }
+        .form-group textarea { min-height: 80px; resize: vertical; font-family: monospace; font-size: 0.85em; }
+        .form-group input:focus, .form-group textarea:focus { border-color: #6366f1; outline: none; background: #fff; }
+
+        .btn {
+            padding: 10px 20px; border-radius: 6px; border: none;
+            cursor: pointer; font-weight: 500; margin-top: 10px; width: 100%;
+            position: relative;
+            transition: all 0.2s;
+        }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn.loading {
+            color: transparent !important;
+            pointer-events: none;
+        }
+        .btn.loading::after {
+            content: '';
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            top: 50%;
+            left: 50%;
+            margin-left: -9px;
+            margin-top: -9px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .btn-primary { background: #6366f1; color: #fff; }
+        .btn-primary:hover:not(:disabled) { background: #5558e3; }
+        .btn-success { background: #22c55e; color: #fff; }
+        .btn-success:hover:not(:disabled) { background: #1ea34d; }
+        .btn-warning { background: #f59e0b; color: #fff; }
+        .btn-warning:hover:not(:disabled) { background: #d97706; }
+        .btn-danger { background: #ef4444; color: #fff; }
+        .btn-danger:hover:not(:disabled) { background: #dc2626; }
+        .btn-secondary { background: #6b7280; color: #fff; }
+        .btn-secondary:hover:not(:disabled) { background: #4b5563; }
+
+        .result {
+            margin-top: 10px; padding: 10px; border-radius: 6px;
+            background: #f9fafb; font-family: monospace; font-size: 0.85em;
+            word-break: break-all; max-height: 150px; overflow-y: auto;
+            border: 1px solid #e5e7eb;
+        }
+        .result.success { border-left: 3px solid #22c55e; background: #f0fdf4; }
+        .result.error { border-left: 3px solid #ef4444; background: #fef2f2; }
+
+        .info-row {
+            display: flex; justify-content: space-between; padding: 8px 0;
+            border-bottom: 1px solid #e5e7eb; font-size: 0.9em;
+        }
+        .info-row:last-child { border-bottom: none; }
+        .info-label { color: #666; }
+        .info-value { color: #333; font-family: monospace; }
+        .info-value.address { font-size: 0.8em; }
+
+        .token-list { max-height: 500px; overflow-y: auto; }
+        .token-item {
+            padding: 12px; background: #f9fafb; border-radius: 8px;
+            margin-bottom: 8px; cursor: pointer; transition: all 0.2s;
+            border: 1px solid #e5e7eb;
+        }
+        .token-item:hover { background: #f3f4f6; }
+        .token-symbol { font-weight: 600; color: #4f46e5; }
+        .token-address { font-size: 0.8em; color: #888; font-family: monospace; }
+        .token-owner { font-size: 0.75em; color: #666; margin-top: 4px; }
+
+        .badge {
+            display: inline-block; padding: 2px 8px; border-radius: 4px;
+            font-size: 0.75em; margin-left: 8px;
+        }
+        .badge-version { background: #e0e7ff; color: #4f46e5; }
+        .badge-limit { background: #fef3c7; color: #d97706; }
+        .badge-role { background: #dcfce7; color: #16a34a; font-size: 0.7em; }
+
+        .hidden { display: none !important; }
+
+        .help-text { font-size: 0.8em; color: #888; margin-top: 5px; }
+        .warning-text { font-size: 0.85em; color: #d97706; margin-bottom: 10px; }
+
+        /* Modal styles */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;
+            z-index: 9999; pointer-events: auto;
+        }
+        .modal-content {
+            background: #fff; border-radius: 12px; padding: 24px; max-width: 500px; width: 90%;
+            max-height: 80vh; overflow-y: auto; box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            position: relative; pointer-events: auto;
+        }
+        .modal-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #e5e7eb;
+        }
+        .modal-header h3 { margin: 0; color: #333; }
+        .modal-close {
+            background: #f3f4f6; border: none; font-size: 1.5em; cursor: pointer; color: #666;
+            padding: 8px 12px; line-height: 1; border-radius: 6px;
+        }
+        .modal-close:hover { color: #333; background: #e5e7eb; }
+        .modal-body { font-size: 0.9em; line-height: 1.6; min-height: 50px; }
+        .modal-body pre {
+            background: #f3f4f6; padding: 12px; border-radius: 6px; overflow-x: auto;
+            font-size: 0.85em; white-space: pre-wrap; word-break: break-all;
+        }
+        .modal-body.success { color: #16a34a; }
+        .modal-body.error { color: #dc2626; }
+
+        @media (max-width: 768px) {
+            .grid { grid-template-columns: 1fr; }
+            .connection-bar { flex-direction: column; }
+            .connection-bar input { min-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Verification Modal -->
+    <div id="verifyModal" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Verification Result</h3>
+                <button class="modal-close" onclick="document.getElementById('verifyModal').classList.add('hidden')" type="button">&times;</button>
+            </div>
+            <div id="modalBody" class="modal-body">Loading...</div>
+            <div style="margin-top: 20px; text-align: right;">
+                <button class="btn btn-primary" onclick="document.getElementById('verifyModal').classList.add('hidden')" type="button" style="width: auto; padding: 12px 32px;">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h1>ARYZE Factory V1</h1>
+        <p class="subtitle">Token Deployment & Management Interface | <strong style="color: #a5b4fc;">Polygon Amoy Testnet (Chain ID: 80002)</strong></p>
+
+        <!-- Connection Bar -->
+        <div class="connection-bar">
+            <input type="text" id="factoryAddress" placeholder="Factory Contract Address (0x...)" value="0x36C476af2cc41f90cC47902F973288fb925dD54B" />
+            <input type="text" id="rpcUrl" placeholder="RPC URL" value="https://polygon-amoy-bor-rpc.publicnode.com" />
+            <button onclick="connect()">Connect</button>
+            <button onclick="switchToAmoy()" style="background: #8b5cf6;">Switch to Amoy</button>
+            <span id="connectionStatus" class="status disconnected">Disconnected</span>
+        </div>
+
+        <!-- Roles Bar -->
+        <div class="roles-bar" id="rolesBar" style="display: none;">
+            <span class="label">Your Roles:</span>
+            <span id="roleAdmin" class="role-badge inactive">ADMIN</span>
+            <span id="roleDeployer" class="role-badge inactive">DEPLOYER</span>
+            <span id="roleBeaconUpgrader" class="role-badge inactive">BEACON_UPGRADER</span>
+            <span id="roleUpgrader" class="role-badge inactive">UPGRADER</span>
+            <span id="rolePauser" class="role-badge inactive">PAUSER</span>
+        </div>
+
+        <!-- Beacon Status -->
+        <div class="beacon-status not-initialized" id="beaconStatus" style="display: none;">
+            <div>
+                <div class="status-text" id="beaconStatusText">Beacon not initialized</div>
+                <div class="help-text" id="beaconHelpText">Deploy beacon to enable token deployment</div>
+            </div>
+            <div class="status-icon" id="beaconStatusIcon">&#9888;</div>
+        </div>
+
+        <!-- ==================== ERC20 TOKENS SECTION ==================== -->
+        <h2 style="color: #4f46e5; margin: 30px 0 20px; padding-bottom: 10px; border-bottom: 2px solid #e5e7eb;">ERC20 Tokens</h2>
+        <div class="grid">
+            <!-- Deploy ERC20 Token -->
+            <div class="card" id="deployTokenCard">
+                <h2>Deploy New ERC20 Token <span class="badge badge-role">DEPLOYER</span></h2>
+                <div id="deployerLimitInfo" style="background: #f3f4f6; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 0.85em;">
+                    <span style="color: #666;">Your deployment limit:</span>
+                    <span id="yourLimit" style="color: #d97706;">-</span> |
+                    <span style="color: #666;">Deployed:</span>
+                    <span id="yourDeployed" style="color: #16a34a;">-</span>
+                </div>
+                <div class="form-group">
+                    <label>Token Name</label>
+                    <input type="text" id="tokenName" placeholder="e.g., ARYZE Euro" />
+                </div>
+                <div class="form-group">
+                    <label>Token Symbol</label>
+                    <input type="text" id="tokenSymbol" placeholder="e.g., eEUR" />
+                </div>
+                <div class="form-group">
+                    <label>Decimals</label>
+                    <input type="number" id="tokenDecimals" value="6" min="0" max="18" />
+                </div>
+                <div class="help-text" style="background: #dcfce7; padding: 10px; border-radius: 6px; margin-bottom: 12px; color: #16a34a;">
+                    You (the deployer) will automatically become the token admin with all roles.
+                </div>
+                <div class="form-group">
+                    <label>Slug (unique number for CREATE2)</label>
+                    <input type="number" id="tokenSlug" value="1" min="0" />
+                    <div class="help-text">Use same slug across chains for deterministic addresses</div>
+                </div>
+                <button class="btn btn-success" onclick="deployToken()" id="deployTokenBtn">Deploy Token</button>
+                <button class="btn btn-secondary" onclick="computeAddress()">Compute Address</button>
+                <div id="deployResult" class="result hidden"></div>
+                <button class="btn btn-primary hidden" id="verifyDeployedBtn" onclick="verifyDeployedToken()" style="margin-top: 10px;">Verify on Explorer</button>
+                <div id="verifyResult" class="result hidden"></div>
+            </div>
+
+            <!-- Deployed Tokens List -->
+            <div class="card">
+                <h2>Deployed Tokens</h2>
+                <div id="tokenList" class="token-list">
+                    <p style="color: #666; text-align: center;">Connect to load tokens</p>
+                </div>
+                <button class="btn btn-secondary" onclick="loadTokens()">Refresh List</button>
+            </div>
+
+            <!-- Token Upgrade (Owner Only) -->
+            <div class="card">
+                <h2>Upgrade Token <span class="badge badge-role">TOKEN OWNER</span></h2>
+                <div class="help-text" style="margin-bottom: 15px;">Only the token owner (set at deployment) can upgrade their token to a new version.</div>
+                <div class="form-group">
+                    <label>Token Address</label>
+                    <input type="text" id="upgradeTokenAddr" placeholder="0x..." />
+                </div>
+                <div class="form-group">
+                    <label>New Version</label>
+                    <input type="number" id="upgradeVersion" value="2" min="1" />
+                </div>
+                <button class="btn btn-warning" onclick="upgradeToken(this)">Upgrade Token</button>
+                <div id="upgradeResult" class="result hidden"></div>
+            </div>
+
+            <!-- Transfer Token Ownership -->
+            <div class="card">
+                <h2>Transfer Token Ownership <span class="badge badge-role">TOKEN OWNER</span></h2>
+                <div class="form-group">
+                    <label>Token Address</label>
+                    <input type="text" id="transferTokenAddr" placeholder="0x..." />
+                </div>
+                <div class="form-group">
+                    <label>New Owner Address</label>
+                    <input type="text" id="newOwnerAddr" placeholder="0x..." />
+                </div>
+                <button class="btn btn-warning" onclick="transferOwnership(this)">Transfer Ownership</button>
+                <div id="transferResult" class="result hidden"></div>
+            </div>
+        </div>
+
+        <!-- ==================== QUERY DATA SECTION ==================== -->
+        <h2 style="color: #4f46e5; margin: 40px 0 20px; padding-bottom: 10px; border-bottom: 2px solid #e5e7eb;">Query Data</h2>
+        <div class="grid">
+            <!-- Lookup Token by Symbol -->
+            <div class="card">
+                <h2>Lookup Token by Symbol</h2>
+                <div class="form-group">
+                    <label>Token Symbol</label>
+                    <input type="text" id="lookupSymbol" placeholder="e.g., eEUR" />
+                </div>
+                <button class="btn btn-primary" onclick="lookupBySymbol(this)">Search</button>
+                <div id="lookupSymbolResult" class="result hidden"></div>
+            </div>
+
+            <!-- Token Info Lookup -->
+            <div class="card">
+                <h2>Token Info Lookup</h2>
+                <div class="form-group">
+                    <label>Token Address</label>
+                    <input type="text" id="tokenInfoAddr" placeholder="0x..." />
+                </div>
+                <button class="btn btn-primary" onclick="lookupTokenInfo(this)">Get Info</button>
+                <div id="tokenInfoResult" class="result hidden"></div>
+            </div>
+
+            <!-- Tokens by Owner -->
+            <div class="card">
+                <h2>Tokens by Owner</h2>
+                <div class="form-group">
+                    <label>Owner Address</label>
+                    <input type="text" id="ownerLookupAddr" placeholder="0x..." />
+                </div>
+                <button class="btn btn-primary" onclick="lookupTokensByOwner(this)">Get Tokens</button>
+                <div id="ownerTokensResult" class="result hidden" style="max-height: 200px;"></div>
+            </div>
+
+            <!-- Check Slug Usage -->
+            <div class="card">
+                <h2>Check Slug Usage</h2>
+                <div class="form-group">
+                    <label>Deployer Address</label>
+                    <input type="text" id="slugDeployer" placeholder="0x... (leave empty for connected wallet)" />
+                </div>
+                <div class="form-group">
+                    <label>Slug Number</label>
+                    <input type="number" id="slugNumber" value="1" min="0" />
+                </div>
+                <button class="btn btn-primary" onclick="checkSlugUsage(this)">Check Slug</button>
+                <div id="slugResult" class="result hidden"></div>
+            </div>
+
+            <!-- User Deployment Info -->
+            <div class="card">
+                <h2>User Deployment Info</h2>
+                <div class="form-group">
+                    <label>User Address</label>
+                    <input type="text" id="userInfoAddr" placeholder="0x... (leave empty for connected wallet)" />
+                </div>
+                <button class="btn btn-primary" onclick="lookupUserInfo(this)">Get Info</button>
+                <div id="userInfoResult" class="result hidden"></div>
+            </div>
+
+            <!-- Role Checker -->
+            <div class="card">
+                <h2>Check Role</h2>
+                <div class="form-group">
+                    <label>Role</label>
+                    <select id="checkRoleSelect">
+                        <option value="DEFAULT_ADMIN_ROLE">DEFAULT_ADMIN_ROLE</option>
+                        <option value="DEPLOYER_ROLE">DEPLOYER_ROLE</option>
+                        <option value="BEACON_UPGRADER_ROLE">BEACON_UPGRADER_ROLE</option>
+                        <option value="UPGRADER_ROLE">UPGRADER_ROLE</option>
+                        <option value="PAUSER_ROLE">PAUSER_ROLE</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Address</label>
+                    <input type="text" id="checkRoleAddr" placeholder="0x... (leave empty for connected wallet)" />
+                </div>
+                <button class="btn btn-primary" onclick="checkRole(this)">Check Role</button>
+                <div id="checkRoleResult" class="result hidden"></div>
+            </div>
+        </div>
+
+        <!-- ==================== FACTORY ADMIN SECTION ==================== -->
+        <h2 style="color: #4f46e5; margin: 40px 0 20px; padding-bottom: 10px; border-bottom: 2px solid #e5e7eb;">Factory Administration</h2>
+        <div class="grid">
+            <!-- Factory Info -->
+            <div class="card">
+                <h2>Factory Information</h2>
+                <div id="factoryInfo">
+                    <div class="info-row"><span class="info-label">Factory Address</span><span class="info-value" id="infoFactoryAddr">-</span></div>
+                    <div class="info-row"><span class="info-label">Beacon Initialized</span><span class="info-value" id="infoBeaconInit">-</span></div>
+                    <div class="info-row"><span class="info-label">ERC20 Beacon</span><span class="info-value address" id="infoBeacon">-</span></div>
+                    <div class="info-row"><span class="info-label">Default Implementation</span><span class="info-value address" id="infoImpl">-</span></div>
+                    <div class="info-row"><span class="info-label">Latest Version</span><span class="info-value" id="infoLatestVer">-</span></div>
+                    <div class="info-row"><span class="info-label">Default Version</span><span class="info-value" id="infoDefaultVer">-</span></div>
+                    <div class="info-row"><span class="info-label">Router</span><span class="info-value address" id="infoRouter">-</span></div>
+                    <div class="info-row"><span class="info-label">Deployed Tokens</span><span class="info-value" id="infoTokenCount">-</span></div>
+                    <div class="info-row"><span class="info-label">Default Deploy Limit</span><span class="info-value" id="infoDefaultLimit">-</span></div>
+                    <div class="info-row"><span class="info-label">Paused</span><span class="info-value" id="infoPaused">-</span></div>
+                </div>
+                <button class="btn btn-secondary" onclick="refreshInfo()">Refresh Info</button>
+            </div>
+
+            <!-- Beacon & Versions Overview -->
+            <div class="card" id="beaconVersionsCard">
+                <h2>Beacon & Versions</h2>
+                <div id="versionsInfo" style="margin-bottom: 15px;">
+                    <div class="info-row"><span class="info-label">VersionedBeacon</span><span class="info-value address" id="versionBeaconAddr">-</span></div>
+                    <div class="info-row"><span class="info-label">Latest Version</span><span class="info-value" id="versionLatest">-</span></div>
+                    <div class="info-row"><span class="info-label">Default Version</span><span class="info-value" id="versionDefault">-</span></div>
+                </div>
+                <h3>All Implementations</h3>
+                <div id="versionsList" class="token-list" style="max-height: 200px; margin-bottom: 15px;">
+                    <p style="color: #666; text-align: center;">Loading versions...</p>
+                </div>
+                <button class="btn btn-secondary" onclick="loadVersions()">Refresh Versions</button>
+            </div>
+
+            <!-- Version Management -->
+            <div class="card" id="versionCard">
+                <h2>Add Implementation <span class="badge badge-role">BEACON_UPGRADER</span></h2>
+                <div class="help-text" style="margin-bottom: 15px;">
+                    Add a new ERC20 implementation version to the beacon.
+                </div>
+
+                <h3>Add Existing Contract</h3>
+                <div class="form-group">
+                    <label>Implementation Address</label>
+                    <input type="text" id="newImpl" placeholder="0x..." />
+                </div>
+                <button class="btn btn-warning" onclick="addImplementation(this)">Add Implementation</button>
+
+                <h3 style="margin-top: 20px;">Deploy & Add New</h3>
+                <div class="form-group">
+                    <label>Implementation Bytecode</label>
+                    <textarea id="newImplBytecode" placeholder="0x608060..."></textarea>
+                </div>
+                <button class="btn btn-success" onclick="deployAndAddImplementation(this)">Deploy & Add</button>
+
+                <h3 style="margin-top: 20px;">Change Default Version</h3>
+                <div class="form-group">
+                    <label>Version Number</label>
+                    <input type="number" id="defaultVersion" value="1" min="1" />
+                </div>
+                <button class="btn btn-warning" onclick="setDefaultVersion(this)">Set Default Version</button>
+                <div id="versionResult" class="result hidden"></div>
+            </div>
+
+            <!-- Deployment Limits -->
+            <div class="card">
+                <h2>Deployment Limits <span class="badge badge-role">ADMIN</span></h2>
+                <h3>Set User Limit</h3>
+                <div class="form-group">
+                    <label>User Address</label>
+                    <input type="text" id="limitUserAddr" placeholder="0x..." />
+                </div>
+                <div class="form-group">
+                    <label>New Limit (0 = use default)</label>
+                    <input type="number" id="limitValue" value="5" min="0" />
+                </div>
+                <button class="btn btn-warning" onclick="setUserLimit(this)">Set User Limit</button>
+
+                <h3>Set Default Limit</h3>
+                <div class="form-group">
+                    <label>New Default Limit</label>
+                    <input type="number" id="defaultLimitValue" value="3" min="1" />
+                </div>
+                <button class="btn btn-warning" onclick="setDefaultLimit(this)">Set Default Limit</button>
+                <div id="limitResult" class="result hidden"></div>
+            </div>
+
+            <!-- Router Management -->
+            <div class="card">
+                <h2>Router Management <span class="badge badge-role">ADMIN</span></h2>
+                <div class="help-text" style="margin-bottom: 15px;">Router is granted ROUTER_ROLE on new tokens.</div>
+                <div class="form-group">
+                    <label>New Router Address</label>
+                    <input type="text" id="newRouter" placeholder="0x..." />
+                </div>
+                <button class="btn btn-warning" onclick="setRouter(this)">Set Router</button>
+                <div id="routerResult" class="result hidden"></div>
+            </div>
+
+            <!-- Role Management -->
+            <div class="card">
+                <h2>Role Management <span class="badge badge-role">ADMIN</span></h2>
+                <h3>Grant Role</h3>
+                <div class="form-group">
+                    <label>Role</label>
+                    <select id="grantRoleSelect">
+                        <option value="DEPLOYER_ROLE">DEPLOYER_ROLE</option>
+                        <option value="BEACON_UPGRADER_ROLE">BEACON_UPGRADER_ROLE</option>
+                        <option value="UPGRADER_ROLE">UPGRADER_ROLE</option>
+                        <option value="PAUSER_ROLE">PAUSER_ROLE</option>
+                        <option value="DEFAULT_ADMIN_ROLE">DEFAULT_ADMIN_ROLE</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Address</label>
+                    <input type="text" id="grantRoleAddr" placeholder="0x..." />
+                </div>
+                <button class="btn btn-warning" onclick="grantRole(this)">Grant Role</button>
+
+                <h3>Revoke Role</h3>
+                <div class="form-group">
+                    <label>Role</label>
+                    <select id="revokeRoleSelect">
+                        <option value="DEPLOYER_ROLE">DEPLOYER_ROLE</option>
+                        <option value="BEACON_UPGRADER_ROLE">BEACON_UPGRADER_ROLE</option>
+                        <option value="UPGRADER_ROLE">UPGRADER_ROLE</option>
+                        <option value="PAUSER_ROLE">PAUSER_ROLE</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Address</label>
+                    <input type="text" id="revokeRoleAddr" placeholder="0x..." />
+                </div>
+                <button class="btn btn-danger" onclick="revokeRole(this)">Revoke Role</button>
+                <div id="roleResult" class="result hidden"></div>
+            </div>
+
+            <!-- Pause Controls -->
+            <div class="card">
+                <h2>Pause Controls <span class="badge badge-role">PAUSER</span></h2>
+                <p style="color: #666; margin-bottom: 15px; font-size: 0.9em;">
+                    Pause/unpause token deployments.
+                </p>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn btn-danger" style="flex: 1;" onclick="pauseFactory(this)">Pause</button>
+                    <button class="btn btn-success" style="flex: 1;" onclick="unpauseFactory(this)">Unpause</button>
+                </div>
+                <div id="pauseResult" class="result hidden"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Factory ABI - Updated to match FactoryV1.sol
+        const FACTORY_ABI = [
+            // View functions
+            "function erc20Beacon() view returns (address)",
+            "function erc20Implementation() view returns (address)",
+            "function router() view returns (address)",
+            "function getLatestVersion() view returns (uint256)",
+            "function getDefaultVersion() view returns (uint256)",
+            "function getDeployedTokensCount() view returns (uint256)",
+            "function getDeployedTokens(uint256 offset, uint256 limit) view returns (address[])",
+            "function getTokenBySymbol(string symbol) view returns (address)",
+            "function getTokenVersion(address token) view returns (uint256)",
+            "function getTokenImplementation(address token) view returns (address)",
+            "function getImplementationAtVersion(uint256 version) view returns (address)",
+            "function isSlugUsed(address deployer, uint256 slug) view returns (bool)",
+            "function computeERC20Address(string name, string symbol, uint8 decimals, address deployer, uint256 slug) view returns (address)",
+            "function paused() view returns (bool)",
+            "function tokenOwner(address token) view returns (address)",
+            "function getTokensByOwner(address owner) view returns (address[])",
+            "function getUserDeploymentLimit(address user) view returns (uint256)",
+            "function getUserDeployedCount(address user) view returns (uint256)",
+            "function defaultDeploymentLimit() view returns (uint256)",
+            "function isBeaconInitialized() view returns (bool)",
+            // Role constants
+            "function DEPLOYER_ROLE() view returns (bytes32)",
+            "function BEACON_UPGRADER_ROLE() view returns (bytes32)",
+            "function UPGRADER_ROLE() view returns (bytes32)",
+            "function PAUSER_ROLE() view returns (bytes32)",
+            "function DEFAULT_ADMIN_ROLE() view returns (bytes32)",
+            // AccessControl functions
+            "function hasRole(bytes32 role, address account) view returns (bool)",
+            "function grantRole(bytes32 role, address account)",
+            "function revokeRole(bytes32 role, address account)",
+            // Write functions
+            "function deployBeacon(bytes implementationBytecode)",
+            "function deployERC20Token(string name, string symbol, uint8 decimals, uint256 slug) returns (address)",
+            "function upgradeToken(address token, uint256 version)",
+            "function transferTokenOwnership(address token, address newOwner)",
+            "function setRouter(address newRouter)",
+            "function addImplementationVersion(address newImpl) returns (uint256)",
+            "function setDefaultVersion(uint256 version)",
+            "function setUserDeploymentLimit(address user, uint256 limit)",
+            "function setDefaultDeploymentLimit(uint256 limit)",
+            "function pause()",
+            "function unpause()",
+            // Events
+            "event ERC20BeaconCreated(address indexed beacon, address indexed implementation)",
+            "event ERC20TokenDeployed(address indexed tokenAddress, string name, string symbol, uint8 decimals, address indexed owner, address indexed deployer)",
+            "event TokenUpgraded(address indexed token, uint256 oldVersion, uint256 newVersion, address indexed upgradedBy)",
+            "event TokenOwnershipTransferred(address indexed token, address indexed previousOwner, address indexed newOwner)",
+            "event ImplementationVersionAdded(uint256 indexed version, address indexed implementation, address indexed addedBy)",
+            "event DefaultVersionChanged(uint256 oldVersion, uint256 newVersion, address indexed changedBy)",
+            "event RouterChanged(address oldRouter, address newRouter, address indexed changedBy)"
+        ];
+
+        const TOKEN_ABI = [
+            "function name() view returns (string)",
+            "function symbol() view returns (string)",
+            "function decimals() view returns (uint8)",
+            "function totalSupply() view returns (uint256)",
+            "function paused() view returns (bool)"
+        ];
+
+        let provider = null;
+        let signer = null;
+        let factory = null;
+        let signerAddress = null;
+        let roles = {};
+        let isBeaconInit = false;
+        let lastDeployedToken = null; // Store last deployed token data for verification
+
+        // Loading state helper for buttons
+        function setButtonLoading(btn, isLoading) {
+            if (isLoading) {
+                btn.dataset.originalText = btn.textContent;
+                btn.classList.add('loading');
+                btn.disabled = true;
+            } else {
+                btn.classList.remove('loading');
+                btn.disabled = false;
+                if (btn.dataset.originalText) {
+                    btn.textContent = btn.dataset.originalText;
+                }
+            }
+        }
+
+        async function connect() {
+            const factoryAddr = document.getElementById('factoryAddress').value.trim();
+            const rpcUrl = document.getElementById('rpcUrl').value.trim();
+
+            if (!factoryAddr || !ethers.isAddress(factoryAddr)) {
+                alert('Please enter a valid factory address');
+                return;
+            }
+
+            try {
+                if (window.ethereum) {
+                    provider = new ethers.BrowserProvider(window.ethereum);
+                    await provider.send("eth_requestAccounts", []);
+                    signer = await provider.getSigner();
+                    signerAddress = await signer.getAddress();
+                } else {
+                    provider = new ethers.JsonRpcProvider(rpcUrl);
+                    const accounts = await provider.listAccounts();
+                    if (accounts.length > 0) {
+                        signer = await provider.getSigner(0);
+                        signerAddress = await signer.getAddress();
+                    }
+                }
+
+                factory = new ethers.Contract(factoryAddr, FACTORY_ABI, signer || provider);
+                await factory.getDeployedTokensCount();
+
+                // Get network info
+                const network = await provider.getNetwork();
+                const networkName = network.chainId === 80002n ? 'Amoy' :
+                                   network.chainId === 137n ? 'Polygon' :
+                                   network.chainId === 1n ? 'Ethereum' :
+                                   `Chain ${network.chainId}`;
+
+                document.getElementById('connectionStatus').textContent =
+                    signer ? `${signerAddress.slice(0, 6)}...${signerAddress.slice(-4)} (${networkName})` : `Read-only (${networkName})`;
+                document.getElementById('connectionStatus').className = 'status connected';
+
+                await checkRoles();
+                await checkBeaconStatus();
+                await refreshInfo();
+                await loadTokens();
+                                await updateDeployerLimits();
+
+            } catch (error) {
+                console.error('Connection error:', error);
+                document.getElementById('connectionStatus').textContent = 'Connection Failed';
+                document.getElementById('connectionStatus').className = 'status disconnected';
+
+                // Check if it's a BAD_DATA error (contract not found on network)
+                if (error.code === 'BAD_DATA' || error.message.includes('could not decode')) {
+                    let networkInfo = '';
+                    try {
+                        const network = await provider.getNetwork();
+                        networkInfo = `\n\nYour wallet is connected to Chain ID: ${network.chainId}`;
+                        if (network.chainId !== 80002n) {
+                            networkInfo += '\n\nPlease switch MetaMask to Polygon Amoy (Chain ID: 80002)';
+                        }
+                    } catch (e) {}
+                    alert('Failed to connect: Contract not found at this address on the current network.' + networkInfo);
+                } else {
+                    alert('Failed to connect: ' + error.message);
+                }
+            }
+        }
+
+        async function checkRoles() {
+            if (!factory || !signerAddress) return;
+
+            document.getElementById('rolesBar').style.display = 'flex';
+
+            try {
+                const [adminRole, deployerRole, beaconUpgraderRole, upgraderRole, pauserRole] = await Promise.all([
+                    factory.DEFAULT_ADMIN_ROLE(),
+                    factory.DEPLOYER_ROLE(),
+                    factory.BEACON_UPGRADER_ROLE(),
+                    factory.UPGRADER_ROLE(),
+                    factory.PAUSER_ROLE()
+                ]);
+
+                const [hasAdmin, hasDeployer, hasBeaconUpgrader, hasUpgrader, hasPauser] = await Promise.all([
+                    factory.hasRole(adminRole, signerAddress),
+                    factory.hasRole(deployerRole, signerAddress),
+                    factory.hasRole(beaconUpgraderRole, signerAddress),
+                    factory.hasRole(upgraderRole, signerAddress),
+                    factory.hasRole(pauserRole, signerAddress)
+                ]);
+
+                roles = {
+                    admin: hasAdmin,
+                    deployer: hasDeployer,
+                    beaconUpgrader: hasBeaconUpgrader,
+                    upgrader: hasUpgrader,
+                    pauser: hasPauser,
+                    adminRole, deployerRole, beaconUpgraderRole, upgraderRole, pauserRole
+                };
+
+                document.getElementById('roleAdmin').className = `role-badge ${hasAdmin ? 'active' : 'inactive'}`;
+                document.getElementById('roleDeployer').className = `role-badge ${hasDeployer ? 'active' : 'inactive'}`;
+                document.getElementById('roleBeaconUpgrader').className = `role-badge ${hasBeaconUpgrader ? 'active' : 'inactive'}`;
+                document.getElementById('roleUpgrader').className = `role-badge ${hasUpgrader ? 'active' : 'inactive'}`;
+                document.getElementById('rolePauser').className = `role-badge ${hasPauser ? 'active' : 'inactive'}`;
+
+            } catch (e) {
+                console.error('Error checking roles:', e);
+            }
+        }
+
+        async function checkBeaconStatus() {
+            if (!factory) return;
+
+            try {
+                isBeaconInit = await factory.isBeaconInitialized();
+                const statusEl = document.getElementById('beaconStatus');
+                const textEl = document.getElementById('beaconStatusText');
+                const helpEl = document.getElementById('beaconHelpText');
+                const iconEl = document.getElementById('beaconStatusIcon');
+
+                statusEl.style.display = 'flex';
+
+                if (isBeaconInit) {
+                    statusEl.className = 'beacon-status initialized';
+                    textEl.textContent = 'Beacon initialized';
+                    helpEl.textContent = 'Ready for token deployment';
+                    iconEl.innerHTML = '&#10003;';
+
+                    // Load versions list
+                    await loadVersions();
+                } else {
+                    statusEl.className = 'beacon-status not-initialized';
+                    textEl.textContent = 'Beacon not initialized';
+                    helpEl.textContent = 'Contact admin to deploy beacon first';
+                    iconEl.innerHTML = '&#9888;';
+
+                    document.getElementById('deployTokenCard').classList.add('disabled');
+                }
+            } catch (e) {
+                console.error('Error checking beacon status:', e);
+            }
+        }
+
+        async function loadVersions() {
+            if (!factory) return;
+
+            try {
+                const [beacon, latestVersion, defaultVersion] = await Promise.all([
+                    factory.erc20Beacon(),
+                    factory.getLatestVersion(),
+                    factory.getDefaultVersion()
+                ]);
+
+                document.getElementById('versionBeaconAddr').textContent = beacon;
+                document.getElementById('versionLatest').textContent = latestVersion.toString();
+                document.getElementById('versionDefault').textContent = defaultVersion.toString();
+
+                const listEl = document.getElementById('versionsList');
+                listEl.innerHTML = '';
+
+                // Load all versions
+                for (let v = 1; v <= Number(latestVersion); v++) {
+                    const impl = await factory.getImplementationAtVersion(v);
+                    const isDefault = v === Number(defaultVersion);
+
+                    const item = document.createElement('div');
+                    item.className = 'token-item';
+                    item.style.cursor = 'default';
+                    item.innerHTML = `
+                        <div>
+                            <span class="token-symbol">Version ${v}</span>
+                            ${isDefault ? '<span class="badge badge-version" style="background: #22c55e33; color: #22c55e;">DEFAULT</span>' : ''}
+                        </div>
+                        <div class="token-address">${impl}</div>
+                    `;
+                    item.onclick = () => {
+                        document.getElementById('newImpl').value = impl;
+                        document.getElementById('defaultVersion').value = v;
+                    };
+                    listEl.appendChild(item);
+                }
+            } catch (error) {
+                console.error('Error loading versions:', error);
+                document.getElementById('versionsList').innerHTML = `<p style="color: #ef4444;">${error.message}</p>`;
+            }
+        }
+
+        async function deployAndAddImplementation(btn) {
+            if (!factory || !signer) {
+                alert('Please connect with a wallet first');
+                return;
+            }
+
+            const bytecode = document.getElementById('newImplBytecode').value.trim();
+            const resultEl = document.getElementById('versionResult');
+            resultEl.classList.remove('hidden');
+
+            if (!bytecode || !bytecode.startsWith('0x')) {
+                resultEl.textContent = 'Error: Please enter valid bytecode starting with 0x';
+                resultEl.className = 'result error';
+                return;
+            }
+
+            setButtonLoading(btn, true);
+
+            try {
+                resultEl.textContent = 'Deploying new implementation contract...';
+                resultEl.className = 'result';
+
+                // Deploy the implementation contract manually
+                const contractFactory = new ethers.ContractFactory([], bytecode, signer);
+                const deployTx = await contractFactory.deploy();
+                resultEl.textContent = `Deploying implementation...\nTx: ${deployTx.deploymentTransaction().hash}`;
+
+                await deployTx.waitForDeployment();
+                const implAddress = await deployTx.getAddress();
+
+                resultEl.textContent = `Implementation deployed at: ${implAddress}\nAdding to beacon...`;
+
+                // Add to beacon
+                const tx = await factory.addImplementationVersion(implAddress);
+                resultEl.textContent = `Adding to beacon...\nTx: ${tx.hash}`;
+
+                await tx.wait();
+
+                const newVersion = await factory.getLatestVersion();
+                resultEl.textContent = `Success!\nImplementation: ${implAddress}\nVersion: ${newVersion}\nSet as default for new tokens.`;
+                resultEl.className = 'result success';
+
+                await loadVersions();
+                await refreshInfo();
+
+            } catch (error) {
+                resultEl.textContent = `Error: ${error.reason || error.message}`;
+                resultEl.className = 'result error';
+            } finally {
+                setButtonLoading(btn, false);
+            }
+        }
+
+        async function updateDeployerLimits() {
+            if (!factory || !signerAddress) return;
+            try {
+                const limit = await factory.getUserDeploymentLimit(signerAddress);
+                const deployed = await factory.getUserDeployedCount(signerAddress);
+                document.getElementById('yourLimit').textContent = limit.toString();
+                document.getElementById('yourDeployed').textContent = deployed.toString();
+
+                // Auto-find next available slug
+                await updateNextAvailableSlug();
+            } catch (e) { console.error(e); }
+        }
+
+        async function updateNextAvailableSlug() {
+            if (!factory || !signerAddress) return;
+            try {
+                // Find next available slug (start from 1, check up to 1000)
+                let nextSlug = 1;
+                for (let i = 1; i <= 1000; i++) {
+                    const isUsed = await factory.isSlugUsed(signerAddress, i);
+                    if (!isUsed) {
+                        nextSlug = i;
+                        break;
+                    }
+                }
+                document.getElementById('tokenSlug').value = nextSlug;
+            } catch (e) { console.error('Error finding next slug:', e); }
+        }
+
+        // ==================== QUERY DATA FUNCTIONS ====================
+
+        async function lookupBySymbol(btn) {
+            if (!factory) return alert('Please connect first');
+
+            const symbol = document.getElementById('lookupSymbol').value.trim();
+            const resultEl = document.getElementById('lookupSymbolResult');
+            resultEl.classList.remove('hidden');
+
+            if (!symbol) {
+                resultEl.textContent = 'Please enter a symbol';
+                resultEl.className = 'result error';
+                return;
+            }
+
+            setButtonLoading(btn, true);
+
+            try {
+                const tokenAddr = await factory.getTokenBySymbol(symbol);
+
+                if (tokenAddr === '0x0000000000000000000000000000000000000000') {
+                    resultEl.textContent = `No token found with symbol "${symbol}"`;
+                    resultEl.className = 'result error';
+                } else {
+                    const token = new ethers.Contract(tokenAddr, TOKEN_ABI, provider);
+                    const [name, decimals, version, owner] = await Promise.all([
+                        token.name(),
+                        token.decimals(),
+                        factory.getTokenVersion(tokenAddr),
+                        factory.tokenOwner(tokenAddr)
+                    ]);
+
+                    resultEl.innerHTML = `
+                        <strong>Found: ${name} (${symbol})</strong><br>
+                        Address: ${tokenAddr}<br>
+                        Decimals: ${decimals}<br>
+                        Version: ${version}<br>
+                        Owner: ${owner}
+                    `;
+                    resultEl.className = 'result success';
+                }
+            } catch (error) {
+                resultEl.textContent = `Error: ${error.reason || error.message}`;
+                resultEl.className = 'result error';
+            } finally {
+                setButtonLoading(btn, false);
+            }
+        }
+
+        async function lookupTokenInfo(btn) {
+            if (!factory) return alert('Please connect first');
+
+            const tokenAddr = document.getElementById('tokenInfoAddr').value.trim();
+            const resultEl = document.getElementById('tokenInfoResult');
+            resultEl.classList.remove('hidden');
+
+            if (!tokenAddr || !ethers.isAddress(tokenAddr)) {
+                resultEl.textContent = 'Please enter a valid address';
+                resultEl.className = 'result error';
+                return;
+            }
+
+            setButtonLoading(btn, true);
+
+            try {
+                const token = new ethers.Contract(tokenAddr, TOKEN_ABI, provider);
+                const [name, symbol, decimals, totalSupply, version, impl, owner] = await Promise.all([
+                    token.name(),
+                    token.symbol(),
+                    token.decimals(),
+                    token.totalSupply(),
+                    factory.getTokenVersion(tokenAddr),
+                    factory.getTokenImplementation(tokenAddr),
+                    factory.tokenOwner(tokenAddr)
+                ]);
+
+                const formattedSupply = ethers.formatUnits(totalSupply, decimals);
+
+                resultEl.innerHTML = `
+                    <strong>${name} (${symbol})</strong><br>
+                    Decimals: ${decimals}<br>
+                    Total Supply: ${formattedSupply}<br>
+                    Version: ${version}<br>
+                    Implementation: <span style="font-size: 0.85em;">${impl}</span><br>
+                    Owner: <span style="font-size: 0.85em;">${owner}</span>
+                `;
+                resultEl.className = 'result success';
+            } catch (error) {
+                resultEl.textContent = `Error: ${error.reason || error.message}`;
+                resultEl.className = 'result error';
+            } finally {
+                setButtonLoading(btn, false);
+            }
+        }
+
+        async function lookupTokensByOwner(btn) {
+            if (!factory) return alert('Please connect first');
+
+            let ownerAddr = document.getElementById('ownerLookupAddr').value.trim();
+            const resultEl = document.getElementById('ownerTokensResult');
+            resultEl.classList.remove('hidden');
+
+            if (!ownerAddr) {
+                if (signerAddress) {
+                    ownerAddr = signerAddress;
+                } else {
+                    resultEl.textContent = 'Please enter an address or connect wallet';
+                    resultEl.className = 'result error';
+                    return;
+                }
+            }
+
+            if (!ethers.isAddress(ownerAddr)) {
+                resultEl.textContent = 'Please enter a valid address';
+                resultEl.className = 'result error';
+                return;
+            }
+
+            setButtonLoading(btn, true);
+
+            try {
+                const tokens = await factory.getTokensByOwner(ownerAddr);
+
+                if (tokens.length === 0) {
+                    resultEl.textContent = `No tokens owned by ${ownerAddr.slice(0,6)}...${ownerAddr.slice(-4)}`;
+                    resultEl.className = 'result';
+                } else {
+                    let html = `<strong>Tokens owned by ${ownerAddr.slice(0,6)}...${ownerAddr.slice(-4)} (${tokens.length}):</strong><br><br>`;
+
+                    for (const addr of tokens) {
+                        try {
+                            const token = new ethers.Contract(addr, TOKEN_ABI, provider);
+                            const [name, symbol] = await Promise.all([token.name(), token.symbol()]);
+                            html += `• <strong>${symbol}</strong> - ${name}<br><span style="font-size: 0.85em; color: #666;">${addr}</span><br><br>`;
+                        } catch {
+                            html += `• ${addr}<br>`;
+                        }
+                    }
+
+                    resultEl.innerHTML = html;
+                    resultEl.className = 'result success';
+                }
+            } catch (error) {
+                resultEl.textContent = `Error: ${error.reason || error.message}`;
+                resultEl.className = 'result error';
+            } finally {
+                setButtonLoading(btn, false);
+            }
+        }
+
+        async function checkSlugUsage(btn) {
+            if (!factory) return alert('Please connect first');
+
+            let deployer = document.getElementById('slugDeployer').value.trim();
+            const slug = parseInt(document.getElementById('slugNumber').value);
+            const resultEl = document.getElementById('slugResult');
+            resultEl.classList.remove('hidden');
+
+            if (!deployer) {
+                if (signerAddress) {
+                    deployer = signerAddress;
+                } else {
+                    resultEl.textContent = 'Please enter a deployer address or connect wallet';
+                    resultEl.className = 'result error';
+                    return;
+                }
+            }
+
+            if (!ethers.isAddress(deployer)) {
+                resultEl.textContent = 'Please enter a valid address';
+                resultEl.className = 'result error';
+                return;
+            }
+
+            setButtonLoading(btn, true);
+
+            try {
+                const isUsed = await factory.isSlugUsed(deployer, slug);
+
+                if (isUsed) {
+                    resultEl.innerHTML = `<span style="color: #ef4444;">✗ Slug ${slug} is <strong>USED</strong></span><br>for deployer ${deployer.slice(0,6)}...${deployer.slice(-4)}`;
+                    resultEl.className = 'result';
+                } else {
+                    resultEl.innerHTML = `<span style="color: #22c55e;">✓ Slug ${slug} is <strong>AVAILABLE</strong></span><br>for deployer ${deployer.slice(0,6)}...${deployer.slice(-4)}`;
+                    resultEl.className = 'result success';
+                }
+            } catch (error) {
+                resultEl.textContent = `Error: ${error.reason || error.message}`;
+                resultEl.className = 'result error';
+            } finally {
+                setButtonLoading(btn, false);
+            }
+        }
+
+        async function lookupUserInfo(btn) {
+            if (!factory) return alert('Please connect first');
+
+            let userAddr = document.getElementById('userInfoAddr').value.trim();
+            const resultEl = document.getElementById('userInfoResult');
+            resultEl.classList.remove('hidden');
+
+            if (!userAddr) {
+                if (signerAddress) {
+                    userAddr = signerAddress;
+                } else {
+                    resultEl.textContent = 'Please enter an address or connect wallet';
+                    resultEl.className = 'result error';
+                    return;
+                }
+            }
+
+            if (!ethers.isAddress(userAddr)) {
+                resultEl.textContent = 'Please enter a valid address';
+                resultEl.className = 'result error';
+                return;
+            }
+
+            setButtonLoading(btn, true);
+
+            try {
+                const [limit, deployed, tokens] = await Promise.all([
+                    factory.getUserDeploymentLimit(userAddr),
+                    factory.getUserDeployedCount(userAddr),
+                    factory.getTokensByOwner(userAddr)
+                ]);
+
+                const remaining = Number(limit) - Number(deployed);
+
+                resultEl.innerHTML = `
+                    <strong>User: ${userAddr.slice(0,6)}...${userAddr.slice(-4)}</strong><br><br>
+                    Deployment Limit: <strong>${limit}</strong><br>
+                    Deployed Count: <strong>${deployed}</strong><br>
+                    Remaining: <strong style="color: ${remaining > 0 ? '#22c55e' : '#ef4444'};">${remaining}</strong><br>
+                    Tokens Owned: <strong>${tokens.length}</strong>
+                `;
+                resultEl.className = 'result success';
+            } catch (error) {
+                resultEl.textContent = `Error: ${error.reason || error.message}`;
+                resultEl.className = 'result error';
+            } finally {
+                setButtonLoading(btn, false);
+            }
+        }
+
+        async function checkRole(btn) {
+            if (!factory) return alert('Please connect first');
+
+            const roleName = document.getElementById('checkRoleSelect').value;
+            let addr = document.getElementById('checkRoleAddr').value.trim();
+            const resultEl = document.getElementById('checkRoleResult');
+            resultEl.classList.remove('hidden');
+
+            if (!addr) {
+                if (signerAddress) {
+                    addr = signerAddress;
+                } else {
+                    resultEl.textContent = 'Please enter an address or connect wallet';
+                    resultEl.className = 'result error';
+                    return;
+                }
+            }
+
+            if (!ethers.isAddress(addr)) {
+                resultEl.textContent = 'Please enter a valid address';
+                resultEl.className = 'result error';
+                return;
+            }
+
+            setButtonLoading(btn, true);
+
+            try {
+                const roleHash = await factory[roleName]();
+                const hasRole = await factory.hasRole(roleHash, addr);
+
+                if (hasRole) {
+                    resultEl.innerHTML = `<span style="color: #22c55e;">✓ Address <strong>HAS</strong> ${roleName}</span><br>${addr.slice(0,6)}...${addr.slice(-4)}`;
+                    resultEl.className = 'result success';
+                } else {
+                    resultEl.innerHTML = `<span style="color: #ef4444;">✗ Address does <strong>NOT</strong> have ${roleName}</span><br>${addr.slice(0,6)}...${addr.slice(-4)}`;
+                    resultEl.className = 'result';
+                }
+            } catch (error) {
+                resultEl.textContent = `Error: ${error.reason || error.message}`;
+                resultEl.className = 'result error';
+            } finally {
+                setButtonLoading(btn, false);
+            }
+        }
+
+        // ==================== END QUERY DATA FUNCTIONS ====================
+
+        async function refreshInfo() {
+            if (!factory) return;
+            try {
+                const isInit = await factory.isBeaconInitialized();
+                document.getElementById('infoBeaconInit').textContent = isInit ? 'Yes' : 'No';
+
+                if (isInit) {
+                    const [beacon, impl, router, latestVer, defaultVer, tokenCount, defaultLimit, paused] = await Promise.all([
+                        factory.erc20Beacon(),
+                        factory.erc20Implementation(),
+                        factory.router(),
+                        factory.getLatestVersion(),
+                        factory.getDefaultVersion(),
+                        factory.getDeployedTokensCount(),
+                        factory.defaultDeploymentLimit(),
+                        factory.paused()
+                    ]);
+
+                    document.getElementById('infoFactoryAddr').textContent = await factory.getAddress();
+                    document.getElementById('infoBeacon').textContent = beacon;
+                    document.getElementById('infoImpl').textContent = impl;
+                    document.getElementById('infoLatestVer').textContent = latestVer.toString();
+                    document.getElementById('infoDefaultVer').textContent = defaultVer.toString();
+                    document.getElementById('infoRouter').textContent = router === '0x0000000000000000000000000000000000000000' ? '(not set)' : router;
+                    document.getElementById('infoTokenCount').textContent = tokenCount.toString();
+                    document.getElementById('infoDefaultLimit').textContent = defaultLimit.toString();
+                    document.getElementById('infoPaused').textContent = paused ? 'Yes' : 'No';
+                } else {
+                    document.getElementById('infoFactoryAddr').textContent = await factory.getAddress();
+                    document.getElementById('infoBeacon').textContent = '(not deployed)';
+                    document.getElementById('infoImpl').textContent = '(not deployed)';
+                    document.getElementById('infoLatestVer').textContent = '-';
+                    document.getElementById('infoDefaultVer').textContent = '-';
+
+                    const [router, tokenCount, defaultLimit, paused] = await Promise.all([
+                        factory.router(),
+                        factory.getDeployedTokensCount(),
+                        factory.defaultDeploymentLimit(),
+                        factory.paused()
+                    ]);
+                    document.getElementById('infoRouter').textContent = router === '0x0000000000000000000000000000000000000000' ? '(not set)' : router;
+                    document.getElementById('infoTokenCount').textContent = tokenCount.toString();
+                    document.getElementById('infoDefaultLimit').textContent = defaultLimit.toString();
+                    document.getElementById('infoPaused').textContent = paused ? 'Yes' : 'No';
+                }
+            } catch (error) {
+                console.error('Error refreshing info:', error);
+            }
+        }
+
+        async function loadTokens() {
+            if (!factory) return;
+            const listEl = document.getElementById('tokenList');
+
+            try {
+                const isInit = await factory.isBeaconInitialized();
+                if (!isInit) {
+                    listEl.innerHTML = '<p style="color: #666; text-align: center;">Beacon not initialized yet</p>';
+                    return;
+                }
+
+                const count = await factory.getDeployedTokensCount();
+                if (count === 0n) {
+                    listEl.innerHTML = '<p style="color: #666; text-align: center;">No tokens deployed yet</p>';
+                    return;
+                }
+
+                const tokens = await factory.getDeployedTokens(0, count);
+                listEl.innerHTML = '<p style="color: #666; text-align: center;">Loading tokens...</p>';
+
+                // Reverse to show newest first
+                const reversedTokens = [...tokens].reverse();
+
+                const beaconAddress = await factory.erc20Beacon();
+                const network = await provider.getNetwork();
+                const networkName = getNetworkName(network.chainId);
+
+                // Check verification status for all tokens in parallel
+                const verificationPromises = reversedTokens.map(addr => isContractVerified(addr, networkName));
+                const verificationStatuses = await Promise.all(verificationPromises);
+
+                listEl.innerHTML = '';
+
+                for (let i = 0; i < reversedTokens.length; i++) {
+                    const addr = reversedTokens[i];
+                    const isVerified = verificationStatuses[i];
+
+                    try {
+                        const token = new ethers.Contract(addr, TOKEN_ABI, provider);
+                        const [name, symbol, decimals, version, owner] = await Promise.all([
+                            token.name(),
+                            token.symbol(),
+                            token.decimals(),
+                            factory.getTokenVersion(addr),
+                            factory.tokenOwner(addr)
+                        ]);
+
+                        // Escape quotes in name/symbol for onclick handler
+                        const escapedName = name.replace(/'/g, "\\'");
+                        const escapedSymbol = symbol.replace(/'/g, "\\'");
+
+                        const item = document.createElement('div');
+                        item.className = 'token-item';
+
+                        // Show "Verified" badge or "Verify" button based on status
+                        const verifySection = isVerified === true
+                            ? `<span style="margin-top: 8px; display: inline-block; padding: 6px 12px; font-size: 0.85em; background: #dcfce7; color: #16a34a; border-radius: 6px;">✓ Verified</span>`
+                            : `<button class="btn btn-primary" style="margin-top: 8px; padding: 6px 12px; font-size: 0.85em;" onclick="event.stopPropagation(); verifyToken('${addr}', '${beaconAddress}', '${escapedName}', '${escapedSymbol}', ${decimals}, '${networkName}')">Verify on Explorer</button>`;
+
+                        item.innerHTML = `
+                            <div><span class="token-symbol">${symbol}</span><span class="badge badge-version">v${version}</span></div>
+                            <div>${name}</div>
+                            <div class="token-address">${addr}</div>
+                            <div class="token-owner">Owner: ${owner.slice(0,6)}...${owner.slice(-4)}</div>
+                            ${verifySection}
+                        `;
+                        item.onclick = () => {
+                            document.getElementById('upgradeTokenAddr').value = addr;
+                            document.getElementById('transferTokenAddr').value = addr;
+                        };
+                        listEl.appendChild(item);
+                    } catch (tokenError) {
+                        console.error(`Error loading token ${addr}:`, tokenError);
+                        const item = document.createElement('div');
+                        item.className = 'token-item';
+                        item.innerHTML = `
+                            <div class="token-address">${addr}</div>
+                            <div style="color: #ef4444; font-size: 0.85em;">Error loading token data</div>
+                        `;
+                        listEl.appendChild(item);
+                    }
+                }
+            } catch (error) {
+                listEl.innerHTML = `<p style="color: #ef4444;">${error.message}</p>`;
+            }
+        }
+
+
+        async function deployToken() {
+            if (!factory || !signer) {
+                alert('Please connect with a wallet first');
+                return;
+            }
+
+            const name = document.getElementById('tokenName').value.trim();
+            const symbol = document.getElementById('tokenSymbol').value.trim();
+            const decimals = parseInt(document.getElementById('tokenDecimals').value);
+            const slug = parseInt(document.getElementById('tokenSlug').value);
+
+            if (!name || !symbol) {
+                alert('Please fill in name and symbol');
+                return;
+            }
+
+            const btn = document.getElementById('deployTokenBtn');
+            const resultEl = document.getElementById('deployResult');
+            resultEl.className = 'result';
+            resultEl.classList.remove('hidden');
+            resultEl.textContent = 'Deploying token...';
+            setButtonLoading(btn, true);
+
+            try {
+                const tx = await factory.deployERC20Token(name, symbol, decimals, slug);
+                resultEl.textContent = `Transaction sent: ${tx.hash}\nWaiting for confirmation...`;
+
+                const receipt = await tx.wait();
+                const event = receipt.logs.find(log => {
+                    try {
+                        return factory.interface.parseLog(log)?.name === 'ERC20TokenDeployed';
+                    } catch { return false; }
+                });
+
+                if (event) {
+                    const parsed = factory.interface.parseLog(event);
+                    const tokenAddress = parsed.args.tokenAddress;
+                    resultEl.textContent = `Token deployed!\nAddress: ${tokenAddress}\nOwner: ${parsed.args.owner}\nTx: ${tx.hash}`;
+                    resultEl.className = 'result success';
+
+                    // Store data for verification
+                    const beaconAddress = await factory.erc20Beacon();
+                    const network = await provider.getNetwork();
+                    lastDeployedToken = {
+                        tokenAddress,
+                        beaconAddress,
+                        name,
+                        symbol,
+                        decimals,
+                        network: getNetworkName(network.chainId)
+                    };
+
+                    // Show verify button
+                    document.getElementById('verifyDeployedBtn').classList.remove('hidden');
+                } else {
+                    resultEl.textContent = `Token deployed!\nTx: ${tx.hash}`;
+                    resultEl.className = 'result success';
+                }
+
+                await refreshInfo();
+                await loadTokens();
+                await updateDeployerLimits();
+
+            } catch (error) {
+                let errorMsg = error.reason || error.message;
+                // Decode AccessControl error
+                if (error.data && error.data.startsWith('0xe2517d3f')) {
+                    errorMsg = 'Access Denied: Your wallet does not have DEPLOYER_ROLE.\n\nAsk the admin to grant you the role, or switch to the admin wallet.';
+                }
+                resultEl.textContent = `Error: ${errorMsg}`;
+                resultEl.className = 'result error';
+            } finally {
+                setButtonLoading(btn, false);
+            }
+        }
+
+        async function computeAddress() {
+            if (!factory) return alert('Please connect first');
+
+            const name = document.getElementById('tokenName').value.trim();
+            const symbol = document.getElementById('tokenSymbol').value.trim();
+            const decimals = parseInt(document.getElementById('tokenDecimals').value);
+            let deployer = signerAddress;
+            const slug = parseInt(document.getElementById('tokenSlug').value);
+
+            if (!name || !symbol) return alert('Please fill in name and symbol');
+
+            const resultEl = document.getElementById('deployResult');
+            resultEl.classList.remove('hidden');
+
+            try {
+                const address = await factory.computeERC20Address(name, symbol, decimals, deployer, slug);
+                resultEl.textContent = `Computed address: ${address}`;
+                resultEl.className = 'result success';
+            } catch (error) {
+                resultEl.textContent = `Error: ${error.reason || error.message}`;
+                resultEl.className = 'result error';
+            }
+        }
+
+        async function upgradeToken(btn) {
+            if (!factory || !signer) return alert('Please connect with a wallet first');
+
+            const tokenAddr = document.getElementById('upgradeTokenAddr').value.trim();
+            const version = parseInt(document.getElementById('upgradeVersion').value);
+            const resultEl = document.getElementById('upgradeResult');
+            resultEl.classList.remove('hidden');
+            setButtonLoading(btn, true);
+
+            try {
+                const tx = await factory.upgradeToken(tokenAddr, version);
+                resultEl.textContent = `Transaction sent: ${tx.hash}`;
+                await tx.wait();
+                resultEl.textContent = `Token upgraded to version ${version}!`;
+                resultEl.className = 'result success';
+                await loadTokens();
+            } catch (error) {
+                resultEl.textContent = `Error: ${error.reason || error.message}`;
+                resultEl.className = 'result error';
+            } finally {
+                setButtonLoading(btn, false);
+            }
+        }
+
+        async function transferOwnership(btn) {
+            if (!factory || !signer) return alert('Please connect with a wallet first');
+
+            const tokenAddr = document.getElementById('transferTokenAddr').value.trim();
+            const newOwner = document.getElementById('newOwnerAddr').value.trim();
+            const resultEl = document.getElementById('transferResult');
+            resultEl.classList.remove('hidden');
+            setButtonLoading(btn, true);
+
+            try {
+                const tx = await factory.transferTokenOwnership(tokenAddr, newOwner);
+                resultEl.textContent = `Transaction sent: ${tx.hash}`;
+                await tx.wait();
+                resultEl.textContent = `Ownership transferred to ${newOwner}`;
+                resultEl.className = 'result success';
+                await loadTokens();
+            } catch (error) {
+                resultEl.textContent = `Error: ${error.reason || error.message}`;
+                resultEl.className = 'result error';
+            } finally {
+                setButtonLoading(btn, false);
+            }
+        }
+
+        async function setUserLimit(btn) {
+            if (!factory || !signer) return alert('Please connect with a wallet first');
+
+            const user = document.getElementById('limitUserAddr').value.trim();
+            const limit = parseInt(document.getElementById('limitValue').value);
+            const resultEl = document.getElementById('limitResult');
+            resultEl.classList.remove('hidden');
+            setButtonLoading(btn, true);
+
+            try {
+                const tx = await factory.setUserDeploymentLimit(user, limit);
+                resultEl.textContent = `Transaction sent: ${tx.hash}`;
+                await tx.wait();
+                resultEl.textContent = `User ${user} limit set to ${limit}`;
+                resultEl.className = 'result success';
+            } catch (error) {
+                resultEl.textContent = `Error: ${error.reason || error.message}`;
+                resultEl.className = 'result error';
+            } finally {
+                setButtonLoading(btn, false);
+            }
+        }
+
+        async function setDefaultLimit(btn) {
+            if (!factory || !signer) return alert('Please connect with a wallet first');
+
+            const limit = parseInt(document.getElementById('defaultLimitValue').value);
+            const resultEl = document.getElementById('limitResult');
+            resultEl.classList.remove('hidden');
+            setButtonLoading(btn, true);
+
+            try {
+                const tx = await factory.setDefaultDeploymentLimit(limit);
+                resultEl.textContent = `Transaction sent: ${tx.hash}`;
+                await tx.wait();
+                resultEl.textContent = `Default limit set to ${limit}`;
+                resultEl.className = 'result success';
+                await refreshInfo();
+            } catch (error) {
+                resultEl.textContent = `Error: ${error.reason || error.message}`;
+                resultEl.className = 'result error';
+            } finally {
+                setButtonLoading(btn, false);
+            }
+        }
+
+        async function setRouter(btn) {
+            if (!factory || !signer) return alert('Please connect with a wallet first');
+
+            const newRouter = document.getElementById('newRouter').value.trim();
+            const resultEl = document.getElementById('routerResult');
+            resultEl.classList.remove('hidden');
+            setButtonLoading(btn, true);
+
+            try {
+                const tx = await factory.setRouter(newRouter);
+                resultEl.textContent = `Transaction sent: ${tx.hash}`;
+                await tx.wait();
+                resultEl.textContent = `Router updated to: ${newRouter}`;
+                resultEl.className = 'result success';
+                await refreshInfo();
+            } catch (error) {
+                resultEl.textContent = `Error: ${error.reason || error.message}`;
+                resultEl.className = 'result error';
+            } finally {
+                setButtonLoading(btn, false);
+            }
+        }
+
+        async function addImplementation(btn) {
+            if (!factory || !signer) return alert('Please connect with a wallet first');
+
+            const newImpl = document.getElementById('newImpl').value.trim();
+            const resultEl = document.getElementById('versionResult');
+            resultEl.classList.remove('hidden');
+            setButtonLoading(btn, true);
+
+            try {
+                const tx = await factory.addImplementationVersion(newImpl);
+                resultEl.textContent = `Transaction sent: ${tx.hash}`;
+                await tx.wait();
+                resultEl.textContent = `Implementation added and set as default!`;
+                resultEl.className = 'result success';
+                await refreshInfo();
+            } catch (error) {
+                resultEl.textContent = `Error: ${error.reason || error.message}`;
+                resultEl.className = 'result error';
+            } finally {
+                setButtonLoading(btn, false);
+            }
+        }
+
+        async function setDefaultVersion(btn) {
+            if (!factory || !signer) return alert('Please connect with a wallet first');
+
+            const version = parseInt(document.getElementById('defaultVersion').value);
+            const resultEl = document.getElementById('versionResult');
+            resultEl.classList.remove('hidden');
+            setButtonLoading(btn, true);
+
+            try {
+                const tx = await factory.setDefaultVersion(version);
+                resultEl.textContent = `Transaction sent: ${tx.hash}`;
+                await tx.wait();
+                resultEl.textContent = `Default version set to: ${version}`;
+                resultEl.className = 'result success';
+                await refreshInfo();
+            } catch (error) {
+                resultEl.textContent = `Error: ${error.reason || error.message}`;
+                resultEl.className = 'result error';
+            } finally {
+                setButtonLoading(btn, false);
+            }
+        }
+
+        async function grantRole(btn) {
+            if (!factory || !signer) return alert('Please connect with a wallet first');
+
+            const roleName = document.getElementById('grantRoleSelect').value;
+            const addr = document.getElementById('grantRoleAddr').value.trim();
+            const resultEl = document.getElementById('roleResult');
+            resultEl.classList.remove('hidden');
+            setButtonLoading(btn, true);
+
+            try {
+                const roleHash = await factory[roleName]();
+                const tx = await factory.grantRole(roleHash, addr);
+                resultEl.textContent = `Transaction sent: ${tx.hash}`;
+                await tx.wait();
+                resultEl.textContent = `${roleName} granted to ${addr}`;
+                resultEl.className = 'result success';
+                await checkRoles();
+            } catch (error) {
+                resultEl.textContent = `Error: ${error.reason || error.message}`;
+                resultEl.className = 'result error';
+            } finally {
+                setButtonLoading(btn, false);
+            }
+        }
+
+        async function revokeRole(btn) {
+            if (!factory || !signer) return alert('Please connect with a wallet first');
+
+            const roleName = document.getElementById('revokeRoleSelect').value;
+            const addr = document.getElementById('revokeRoleAddr').value.trim();
+            const resultEl = document.getElementById('roleResult');
+            resultEl.classList.remove('hidden');
+            setButtonLoading(btn, true);
+
+            try {
+                const roleHash = await factory[roleName]();
+                const tx = await factory.revokeRole(roleHash, addr);
+                resultEl.textContent = `Transaction sent: ${tx.hash}`;
+                await tx.wait();
+                resultEl.textContent = `${roleName} revoked from ${addr}`;
+                resultEl.className = 'result success';
+                await checkRoles();
+            } catch (error) {
+                resultEl.textContent = `Error: ${error.reason || error.message}`;
+                resultEl.className = 'result error';
+            } finally {
+                setButtonLoading(btn, false);
+            }
+        }
+
+        async function pauseFactory(btn) {
+            if (!factory || !signer) return alert('Please connect with a wallet first');
+            const resultEl = document.getElementById('pauseResult');
+            resultEl.classList.remove('hidden');
+            setButtonLoading(btn, true);
+
+            try {
+                const tx = await factory.pause();
+                resultEl.textContent = `Transaction sent: ${tx.hash}`;
+                await tx.wait();
+                resultEl.textContent = `Factory paused`;
+                resultEl.className = 'result success';
+                await refreshInfo();
+            } catch (error) {
+                resultEl.textContent = `Error: ${error.reason || error.message}`;
+                resultEl.className = 'result error';
+            } finally {
+                setButtonLoading(btn, false);
+            }
+        }
+
+        async function unpauseFactory(btn) {
+            if (!factory || !signer) return alert('Please connect with a wallet first');
+            const resultEl = document.getElementById('pauseResult');
+            resultEl.classList.remove('hidden');
+            setButtonLoading(btn, true);
+
+            try {
+                const tx = await factory.unpause();
+                resultEl.textContent = `Transaction sent: ${tx.hash}`;
+                await tx.wait();
+                resultEl.textContent = `Factory unpaused`;
+                resultEl.className = 'result success';
+                await refreshInfo();
+            } catch (error) {
+                resultEl.textContent = `Error: ${error.reason || error.message}`;
+                resultEl.className = 'result error';
+            } finally {
+                setButtonLoading(btn, false);
+            }
+        }
+
+        async function switchToAmoy() {
+            if (!window.ethereum) {
+                alert('MetaMask not detected. Please install MetaMask.');
+                return;
+            }
+
+            const amoyChainId = '0x13882'; // 80002 in hex
+
+            try {
+                // Try to switch to Amoy
+                await window.ethereum.request({
+                    method: 'wallet_switchEthereumChain',
+                    params: [{ chainId: amoyChainId }]
+                });
+                alert('Switched to Polygon Amoy! Click Connect now.');
+            } catch (switchError) {
+                // Network doesn't exist, add it
+                if (switchError.code === 4902) {
+                    try {
+                        await window.ethereum.request({
+                            method: 'wallet_addEthereumChain',
+                            params: [{
+                                chainId: amoyChainId,
+                                chainName: 'Polygon Amoy Testnet',
+                                nativeCurrency: {
+                                    name: 'POL',
+                                    symbol: 'POL',
+                                    decimals: 18
+                                },
+                                rpcUrls: ['https://polygon-amoy-bor-rpc.publicnode.com'],
+                                blockExplorerUrls: ['https://amoy.polygonscan.com']
+                            }]
+                        });
+                        alert('Polygon Amoy network added! Click Connect now.');
+                    } catch (addError) {
+                        alert('Failed to add network: ' + addError.message);
+                    }
+                } else {
+                    alert('Failed to switch network: ' + switchError.message);
+                }
+            }
+        }
+
+        // Verification API URL
+        const VERIFY_API_URL = 'https://reforge-v5-verification.vercel.app/api/verify';
+
+        // Network chain ID to name mapping
+        function getNetworkName(chainId) {
+            const networkMap = {
+                80002n: 'amoy',
+                137n: 'polygon',
+                1n: 'mainnet',
+                11155111n: 'sepolia',
+                8453n: 'base',
+                84532n: 'baseSepolia',
+                42161n: 'arbitrum',
+                421614n: 'arbitrumSepolia',
+                10n: 'optimism',
+                56n: 'bsc',
+                59144n: 'linea',
+                534352n: 'scroll',
+                81457n: 'blast',
+                42220n: 'celo',
+                100n: 'gnosis',
+                250n: 'fantom',
+                1284n: 'moonbeam',
+                43114n: 'avalanche',
+                5000n: 'mantle',
+                324n: 'zksync'
+            };
+            return networkMap[chainId] || 'unknown';
+        }
+
+        // Explorer API URLs for checking verification status
+        const EXPLORER_API_URLS = {
+            'amoy': 'https://api-amoy.polygonscan.com/api',
+            'polygon': 'https://api.polygonscan.com/api',
+            'mainnet': 'https://api.etherscan.io/api',
+            'sepolia': 'https://api-sepolia.etherscan.io/api',
+            'base': 'https://api.basescan.org/api',
+            'baseSepolia': 'https://api-sepolia.basescan.org/api',
+            'arbitrum': 'https://api.arbiscan.io/api',
+            'optimism': 'https://api-optimistic.etherscan.io/api',
+            'bsc': 'https://api.bscscan.com/api'
+        };
+
+        // Check if a contract is verified on the block explorer
+        async function isContractVerified(address, network) {
+            const apiUrl = EXPLORER_API_URLS[network];
+            if (!apiUrl) return null; // Unknown network, can't check
+
+            try {
+                const response = await fetch(`${apiUrl}?module=contract&action=getabi&address=${address}`);
+                const data = await response.json();
+                // If status is "1", the contract is verified (ABI is available)
+                return data.status === '1';
+            } catch (error) {
+                console.error('Error checking verification status:', error);
+                return null; // Error checking, show button anyway
+            }
+        }
+
+        async function verifyDeployedToken() {
+            if (!lastDeployedToken) {
+                alert('No recently deployed token to verify');
+                return;
+            }
+
+            const resultEl = document.getElementById('verifyResult');
+            resultEl.classList.remove('hidden');
+            resultEl.className = 'result';
+            resultEl.textContent = `Verifying ${lastDeployedToken.symbol} on ${lastDeployedToken.network}...`;
+
+            try {
+                const response = await fetch(VERIFY_API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(lastDeployedToken)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    resultEl.innerHTML = `✓ ${result.message}<br><br>Token: ${lastDeployedToken.tokenAddress}<br>Network: ${lastDeployedToken.network}`;
+                    resultEl.className = 'result success';
+                } else {
+                    resultEl.innerHTML = `✗ ${result.message}<br><br>Token: ${lastDeployedToken.tokenAddress}<br>Network: ${lastDeployedToken.network}`;
+                    resultEl.className = 'result error';
+                }
+            } catch (error) {
+                resultEl.textContent = `Error: ${error.message}`;
+                resultEl.className = 'result error';
+            }
+        }
+
+        // Modal functions
+        function showModal(title, content, isSuccess) {
+            document.getElementById('modalTitle').textContent = title;
+            const bodyEl = document.getElementById('modalBody');
+            bodyEl.innerHTML = content;
+            bodyEl.className = 'modal-body ' + (isSuccess ? 'success' : 'error');
+            document.getElementById('verifyModal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('verifyModal').classList.add('hidden');
+        }
+
+        async function verifyToken(tokenAddress, beaconAddress, name, symbol, decimals, network) {
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.textContent = 'Verifying...';
+            btn.disabled = true;
+
+            let success = false;
+
+            try {
+                const response = await fetch(VERIFY_API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        tokenAddress,
+                        beaconAddress,
+                        name,
+                        symbol,
+                        decimals,
+                        network
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    success = true;
+                    // Replace button with verified badge
+                    const badge = document.createElement('span');
+                    badge.style.cssText = 'margin-top: 8px; display: inline-block; padding: 6px 12px; font-size: 0.85em; background: #dcfce7; color: #16a34a; border-radius: 6px;';
+                    badge.textContent = '✓ Verified';
+                    btn.replaceWith(badge);
+
+                    showModal('Verification Successful', `
+                        <p><strong>Token:</strong> ${tokenAddress}</p>
+                        <p><strong>Network:</strong> ${network}</p>
+                        <p><strong>Message:</strong> ${result.message}</p>
+                        ${result.guid ? `<p><strong>GUID:</strong> ${result.guid}</p>` : ''}
+                    `, true);
+                } else {
+                    btn.textContent = '✗ Failed';
+                    btn.style.background = '#ef4444';
+                    showModal('Verification Failed', `
+                        <p><strong>Token:</strong> ${tokenAddress}</p>
+                        <p><strong>Network:</strong> ${network}</p>
+                        <p><strong>Error:</strong></p>
+                        <pre>${result.message || result.error || JSON.stringify(result, null, 2)}</pre>
+                    `, false);
+                }
+            } catch (error) {
+                btn.textContent = '✗ Error';
+                btn.style.background = '#ef4444';
+                showModal('Verification Error', `
+                    <p><strong>Error:</strong></p>
+                    <pre>${error.message}</pre>
+                `, false);
+            }
+
+            // Only reset button if verification failed
+            if (!success) {
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.style.background = '';
+                    btn.disabled = false;
+                }, 3000);
+            }
+        }
+
+        window.addEventListener('load', async () => {
+            if (window.ethereum) {
+                document.getElementById('rpcUrl').placeholder = 'MetaMask detected - will use wallet';
+                // Auto-connect if wallet is available
+                try {
+                    const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+                    if (accounts.length > 0) {
+                        // Wallet already connected, auto-connect
+                        connect();
+                    }
+                } catch (e) {
+                    console.log('Auto-connect check failed:', e);
+                }
+            }
+        });
+
+        // Listen for account/network changes
+        if (window.ethereum) {
+            window.ethereum.on('accountsChanged', () => {
+                window.location.reload();
+            });
+            window.ethereum.on('chainChanged', () => {
+                window.location.reload();
+            });
+        }
+    </script>
+</body>
+</html>
