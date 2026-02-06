@@ -6,194 +6,554 @@
     <title>ARYZE Factory V1 - Admin UI</title>
     <script src="https://cdn.jsdelivr.net/npm/ethers@6.9.0/dist/ethers.umd.min.js"></script>
     <style>
+        :root {
+            --bg-page: #f1f5f9;
+            --bg-card: #ffffff;
+            --bg-input: #f8fafc;
+            --border: #e2e8f0;
+            --border-focus: #3b82f6;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            --accent: #2563eb;
+            --accent-hover: #1d4ed8;
+            --success: #16a34a;
+            --warning: #ca8a04;
+            --danger: #dc2626;
+        }
+
         * { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f5f5f5;
-            min-height: 100vh; color: #333; padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-page);
+            color: var(--text-primary);
+            font-size: 14px;
+            line-height: 1.5;
         }
-        .container { max-width: 1400px; margin: 0 auto; }
-        h1 { text-align: center; margin-bottom: 10px; color: #1a1a2e; font-size: 2em; }
-        .subtitle { text-align: center; color: #666; margin-bottom: 30px; }
 
-        .connection-bar {
-            background: #fff; border-radius: 12px; padding: 20px;
-            margin-bottom: 20px; display: flex; gap: 15px; align-items: center; flex-wrap: wrap;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        }
-        .connection-bar input {
-            flex: 1; min-width: 300px; padding: 12px; border-radius: 8px;
-            border: 1px solid #ddd; background: #fafafa; color: #333;
-        }
-        .connection-bar button {
-            padding: 12px 24px; border-radius: 8px; border: none;
-            background: #6366f1; color: #fff; cursor: pointer; font-weight: 600;
-        }
-        .connection-bar button:hover { background: #5558e3; }
-        .status { padding: 8px 16px; border-radius: 20px; font-size: 0.85em; }
-        .status.connected { background: #dcfce7; color: #16a34a; }
-        .status.disconnected { background: #fee2e2; color: #dc2626; }
+        .container { max-width: 100%; margin: 0; padding: 12px; }
 
+        /* ========== HEADER ========== */
+        .page-header {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 10px 14px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .page-header h1 { font-size: 16px; font-weight: 600; }
+        .network-badge {
+            background: #dbeafe;
+            color: #1e40af;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        /* ========== CONNECTION PANEL ========== */
+        .connection-panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+        .connection-panel h3 {
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+        .connection-row {
+            display: flex;
+            gap: 8px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+        .field { flex: 1; min-width: 150px; }
+        .field label {
+            display: block;
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+        .field input {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 12px;
+            font-family: monospace;
+            background: var(--bg-input);
+            transition: border-color 0.15s;
+        }
+        .field input:focus {
+            outline: none;
+            border-color: var(--border-focus);
+            background: #fff;
+        }
+        .connection-actions {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+        .btn-connect {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .btn-connect:hover { background: var(--accent-hover); }
+        .btn-network {
+            background: #fff;
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+            padding: 7px 12px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .btn-network:hover { border-color: var(--text-secondary); }
+
+        /* Status pill */
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .status-pill .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+        }
+        .status-pill.connected { background: #dcfce7; color: #166534; }
+        .status-pill.connected .dot { background: #22c55e; }
+        .status-pill.disconnected { background: #fee2e2; color: #991b1b; }
+        .status-pill.disconnected .dot { background: #ef4444; }
+
+        /* ========== ROLES BAR ========== */
         .roles-bar {
-            background: #fff; border-radius: 8px; padding: 12px 16px;
-            margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 8px 12px;
+            margin-bottom: 12px;
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            flex-wrap: wrap;
         }
-        .roles-bar .label { color: #666; font-size: 0.85em; margin-right: 5px; }
+        .roles-bar .label {
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-right: 6px;
+        }
         .role-badge {
-            padding: 4px 10px; border-radius: 12px; font-size: 0.75em; font-weight: 500;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: 600;
         }
-        .role-badge.active { background: #dcfce7; color: #16a34a; }
-        .role-badge.inactive { background: #f3f4f6; color: #9ca3af; }
+        .role-badge.active { background: #dcfce7; color: #166534; }
+        .role-badge.inactive { background: #f1f5f9; color: #94a3b8; }
 
+        /* Beacon status */
         .beacon-status {
-            background: #fff; border-radius: 12px; padding: 15px 20px;
-            margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 8px 12px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-        .beacon-status.not-initialized { border: 2px solid #f59e0b; }
-        .beacon-status.initialized { border: 2px solid #22c55e; }
-        .beacon-status .status-text { font-size: 0.95em; }
-        .beacon-status .status-icon { font-size: 1.5em; }
+        .beacon-status.not-initialized { border-left: 3px solid var(--warning); }
+        .beacon-status.initialized { border-left: 3px solid var(--success); }
+        .beacon-status .status-text { font-weight: 600; font-size: 12px; }
+        .beacon-status .help-text { font-size: 11px; color: var(--text-secondary); }
 
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 20px; }
+        /* ========== TABS ========== */
+        .tab-container {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .tab-nav {
+            display: flex;
+            background: #f8fafc;
+            border-bottom: 1px solid var(--border);
+            padding: 0;
+            margin: 0;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 10px 16px;
+            border: none;
+            background: transparent;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.15s;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -1px;
+        }
+        .tab-btn:hover {
+            background: #f1f5f9;
+            color: var(--text-primary);
+        }
+        .tab-btn.active {
+            background: #fff;
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+        .tab-content {
+            padding: 12px;
+        }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
 
+        /* Section header inside tab */
+        .section-header {
+            margin-bottom: 12px;
+        }
+        .section-header h2 {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+        }
+        .section-header .description {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* ========== GRID ========== */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        /* ========== CARDS ========== */
         .card {
-            background: #fff; border-radius: 12px; padding: 20px;
-            border: 1px solid #e5e7eb;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 14px;
+        }
+        /* Card title styling */
+        .card > h2:first-child {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0 0 12px 0;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
         }
         .card.disabled { opacity: 0.5; pointer-events: none; }
-        .card h2 {
-            font-size: 1.1em; margin-bottom: 15px; color: #4f46e5;
-            border-bottom: 1px solid #e5e7eb; padding-bottom: 10px;
+        .card h3 {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            margin: 20px 0 10px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
         }
-        .card h3 { font-size: 0.95em; margin: 15px 0 10px; color: #666; }
+        .card h3:first-child { margin-top: 0; padding-top: 0; border-top: none; }
 
-        .form-group { margin-bottom: 12px; }
-        .form-group label { display: block; margin-bottom: 5px; color: #555; font-size: 0.85em; }
-        .form-group input, .form-group select, .form-group textarea {
-            width: 100%; padding: 10px; border-radius: 6px;
-            border: 1px solid #ddd; background: #fafafa; color: #333;
-            font-family: inherit;
+        /* ========== FORMS ========== */
+        .form-group { margin-bottom: 10px; }
+        .form-group label {
+            display: block;
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
         }
-        .form-group textarea { min-height: 80px; resize: vertical; font-family: monospace; font-size: 0.85em; }
-        .form-group input:focus, .form-group textarea:focus { border-color: #6366f1; outline: none; background: #fff; }
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 12px;
+            background: var(--bg-input);
+            color: var(--text-primary);
+            transition: border-color 0.15s;
+        }
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--border-focus);
+            background: #fff;
+        }
+        .form-group input[type="text"],
+        .form-group input[type="number"],
+        .form-group textarea {
+            font-family: 'SF Mono', Monaco, monospace;
+        }
+        .form-group textarea { min-height: 80px; resize: vertical; }
+        .form-group select { cursor: pointer; }
 
+        /* ========== BUTTONS ========== */
         .btn {
-            padding: 10px 20px; border-radius: 6px; border: none;
-            cursor: pointer; font-weight: 500; margin-top: 10px; width: 100%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 14px;
+            border-radius: 4px;
+            border: none;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+            width: 100%;
+            margin-top: 8px;
             position: relative;
-            transition: all 0.2s;
         }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .btn.loading {
-            color: transparent !important;
-            pointer-events: none;
-        }
+        .btn.loading { color: transparent !important; pointer-events: none; }
         .btn.loading::after {
             content: '';
             position: absolute;
-            width: 18px;
-            height: 18px;
-            top: 50%;
-            left: 50%;
-            margin-left: -9px;
-            margin-top: -9px;
+            width: 16px; height: 16px;
             border: 2px solid rgba(255,255,255,0.3);
             border-top-color: #fff;
             border-radius: 50%;
-            animation: spin 0.8s linear infinite;
+            animation: spin 0.6s linear infinite;
         }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        .btn-primary { background: #6366f1; color: #fff; }
-        .btn-primary:hover:not(:disabled) { background: #5558e3; }
-        .btn-success { background: #22c55e; color: #fff; }
-        .btn-success:hover:not(:disabled) { background: #1ea34d; }
-        .btn-warning { background: #f59e0b; color: #fff; }
-        .btn-warning:hover:not(:disabled) { background: #d97706; }
-        .btn-danger { background: #ef4444; color: #fff; }
-        .btn-danger:hover:not(:disabled) { background: #dc2626; }
-        .btn-secondary { background: #6b7280; color: #fff; }
-        .btn-secondary:hover:not(:disabled) { background: #4b5563; }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
+
+        .btn-success { background: var(--success); color: #fff; }
+        .btn-success:hover:not(:disabled) { background: #15803d; }
+
+        .btn-warning { background: var(--warning); color: #fff; }
+        .btn-warning:hover:not(:disabled) { background: #a16207; }
+
+        .btn-danger { background: var(--danger); color: #fff; }
+        .btn-danger:hover:not(:disabled) { background: #b91c1c; }
+
+        .btn-secondary {
+            background: #fff;
+            color: var(--text-secondary);
+            border: 2px solid var(--border);
+        }
+        .btn-secondary:hover:not(:disabled) {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+        }
+
+        /* Button row */
+        .btn-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .btn-row .btn { flex: 1; margin-top: 0; }
+
+        /* ========== RESULTS ========== */
         .result {
-            margin-top: 10px; padding: 10px; border-radius: 6px;
-            background: #f9fafb; font-family: monospace; font-size: 0.85em;
-            word-break: break-all; max-height: 150px; overflow-y: auto;
-            border: 1px solid #e5e7eb;
+            margin-top: 14px;
+            padding: 12px 14px;
+            border-radius: 6px;
+            background: #f8fafc;
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 12px;
+            word-break: break-all;
+            max-height: 150px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
         }
-        .result.success { border-left: 3px solid #22c55e; background: #f0fdf4; }
-        .result.error { border-left: 3px solid #ef4444; background: #fef2f2; }
+        .result.success { background: #f0fdf4; border-color: #bbf7d0; color: #166534; }
+        .result.error { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
 
+        /* ========== INFO TABLE ========== */
+        .info-table { width: 100%; }
         .info-row {
-            display: flex; justify-content: space-between; padding: 8px 0;
-            border-bottom: 1px solid #e5e7eb; font-size: 0.9em;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 0;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 12px;
+            gap: 8px;
         }
         .info-row:last-child { border-bottom: none; }
-        .info-label { color: #666; }
-        .info-value { color: #333; font-family: monospace; }
-        .info-value.address { font-size: 0.8em; }
+        .info-label { color: var(--text-secondary); white-space: nowrap; flex-shrink: 0; }
+        .info-value {
+            color: var(--text-primary);
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 11px;
+            text-align: right;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 180px;
+        }
+        .info-value.address { cursor: pointer; }
+        .info-value.address:hover { color: var(--accent); }
 
-        .token-list { max-height: 500px; overflow-y: auto; }
+        /* ========== TOKEN LIST ========== */
+        .token-list { max-height: 350px; overflow-y: auto; }
         .token-item {
-            padding: 12px; background: #f9fafb; border-radius: 8px;
-            margin-bottom: 8px; cursor: pointer; transition: all 0.2s;
-            border: 1px solid #e5e7eb;
+            padding: 14px;
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.15s;
         }
-        .token-item:hover { background: #f3f4f6; }
-        .token-symbol { font-weight: 600; color: #4f46e5; }
-        .token-address { font-size: 0.8em; color: #888; font-family: monospace; }
-        .token-owner { font-size: 0.75em; color: #666; margin-top: 4px; }
+        .token-item:hover {
+            background: #f1f5f9;
+            border-color: #cbd5e1;
+        }
+        .token-symbol { font-weight: 600; color: var(--text-primary); font-size: 14px; }
+        .token-name { font-size: 12px; color: var(--text-secondary); }
+        .token-address {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-family: monospace;
+            margin-top: 6px;
+        }
+        .token-owner { font-size: 11px; color: var(--text-secondary); margin-top: 4px; }
 
+        /* ========== BADGES ========== */
         .badge {
-            display: inline-block; padding: 2px 8px; border-radius: 4px;
-            font-size: 0.75em; margin-left: 8px;
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
         }
-        .badge-version { background: #e0e7ff; color: #4f46e5; }
-        .badge-limit { background: #fef3c7; color: #d97706; }
-        .badge-role { background: #dcfce7; color: #16a34a; font-size: 0.7em; }
+        .badge-version { background: #dbeafe; color: #1e40af; }
+        .badge-role { background: #dcfce7; color: #166534; }
+
+        /* ========== HELPER TEXT ========== */
+        .help-text {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 6px;
+        }
+        .info-box {
+            padding: 12px 14px;
+            border-radius: 6px;
+            font-size: 12px;
+            margin: 12px 0;
+        }
+        .info-box.warning { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+        .info-box.success { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+        .info-box.info { background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
 
         .hidden { display: none !important; }
 
-        .help-text { font-size: 0.8em; color: #888; margin-top: 5px; }
-        .warning-text { font-size: 0.85em; color: #d97706; margin-bottom: 10px; }
-
-        /* Modal styles */
+        /* ========== MODAL ========== */
         .modal-overlay {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;
-            z-index: 9999; pointer-events: auto;
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
         }
         .modal-content {
-            background: #fff; border-radius: 12px; padding: 24px; max-width: 500px; width: 90%;
-            max-height: 80vh; overflow-y: auto; box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-            position: relative; pointer-events: auto;
+            background: #fff;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 480px;
+            max-height: 80vh;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
         }
         .modal-header {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #e5e7eb;
+            padding: 18px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-        .modal-header h3 { margin: 0; color: #333; }
+        .modal-header h3 { font-size: 16px; font-weight: 600; }
         .modal-close {
-            background: #f3f4f6; border: none; font-size: 1.5em; cursor: pointer; color: #666;
-            padding: 8px 12px; line-height: 1; border-radius: 6px;
+            width: 32px; height: 32px;
+            border: none;
+            background: #f1f5f9;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 18px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        .modal-close:hover { color: #333; background: #e5e7eb; }
-        .modal-body { font-size: 0.9em; line-height: 1.6; min-height: 50px; }
+        .modal-close:hover { background: #e2e8f0; }
+        .modal-body {
+            padding: 20px;
+            max-height: 60vh;
+            overflow-y: auto;
+            font-size: 13px;
+        }
         .modal-body pre {
-            background: #f3f4f6; padding: 12px; border-radius: 6px; overflow-x: auto;
-            font-size: 0.85em; white-space: pre-wrap; word-break: break-all;
+            background: #f8fafc;
+            padding: 14px;
+            border-radius: 6px;
+            font-size: 12px;
+            overflow-x: auto;
         }
-        .modal-body.success { color: #16a34a; }
-        .modal-body.error { color: #dc2626; }
+        .modal-body.success { color: var(--success); }
+        .modal-body.error { color: var(--danger); }
+        .modal-footer {
+            padding: 16px 20px;
+            border-top: 1px solid var(--border);
+            text-align: right;
+        }
 
+        /* ========== RESPONSIVE ========== */
+        @media (max-width: 1200px) {
+            .grid { grid-template-columns: repeat(2, 1fr); }
+        }
         @media (max-width: 768px) {
-            .grid { grid-template-columns: 1fr; }
-            .connection-bar { flex-direction: column; }
-            .connection-bar input { min-width: 100%; }
+            .container { padding: 8px; }
+            .grid { grid-template-columns: 1fr; gap: 8px; }
+            .connection-row { flex-direction: column; }
+            .field { min-width: 100%; }
+            .connection-actions { width: 100%; justify-content: stretch; }
+            .connection-actions > * { flex: 1; }
+            .tab-content { padding: 8px; }
+            .card { padding: 10px; }
         }
     </style>
 </head>
@@ -213,39 +573,49 @@
     </div>
 
     <div class="container">
-        <h1>ARYZE Factory V1</h1>
-        <p class="subtitle">Token Deployment & Management Interface | <strong style="color: #a5b4fc;">Polygon Amoy Testnet (Chain ID: 80002)</strong></p>
-
-        <!-- Connection Bar -->
-        <div class="connection-bar">
-            <input type="text" id="factoryAddress" placeholder="Factory Contract Address (0x...)" value="0x36C476af2cc41f90cC47902F973288fb925dD54B" />
-            <input type="text" id="rpcUrl" placeholder="RPC URL" value="https://polygon-amoy-bor-rpc.publicnode.com" />
-            <button onclick="connect()">Connect</button>
-            <button onclick="switchToAmoy()" style="background: #8b5cf6;">Switch to Amoy</button>
-            <span id="connectionStatus" class="status disconnected">Disconnected</span>
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1>ARYZE Factory</h1>
+            <span class="network-badge">Polygon Amoy Testnet</span>
         </div>
 
-        <!-- Roles Bar -->
-        <div class="roles-bar" id="rolesBar" style="display: none;">
-            <span class="label">Your Roles:</span>
-            <span id="roleAdmin" class="role-badge inactive">ADMIN</span>
-            <span id="roleDeployer" class="role-badge inactive">DEPLOYER</span>
-            <span id="roleBeaconUpgrader" class="role-badge inactive">BEACON_UPGRADER</span>
-            <span id="roleUpgrader" class="role-badge inactive">UPGRADER</span>
-            <span id="rolePauser" class="role-badge inactive">PAUSER</span>
-        </div>
-
-        <!-- Beacon Status -->
-        <div class="beacon-status not-initialized" id="beaconStatus" style="display: none;">
-            <div>
-                <div class="status-text" id="beaconStatusText">Beacon not initialized</div>
-                <div class="help-text" id="beaconHelpText">Deploy beacon to enable token deployment</div>
+        <!-- Wallet Connection Panel (Global) -->
+        <div class="connection-panel">
+            <h3>Wallet Connection</h3>
+            <div class="connection-row">
+                <div class="field">
+                    <label>RPC URL (fallback if no wallet)</label>
+                    <input type="text" id="rpcUrl" placeholder="RPC URL" value="https://polygon-amoy-bor-rpc.publicnode.com" />
+                </div>
+                <div class="connection-actions">
+                    <button class="btn-connect" onclick="connectWallet()">Connect Wallet</button>
+                    <button class="btn-network" onclick="switchToAmoy()">Switch to Amoy</button>
+                    <span id="connectionStatus" class="status-pill disconnected"><span class="dot"></span>Disconnected</span>
+                </div>
             </div>
-            <div class="status-icon" id="beaconStatusIcon">&#9888;</div>
         </div>
 
-        <!-- ==================== ERC20 TOKENS SECTION ==================== -->
-        <h2 style="color: #4f46e5; margin: 30px 0 20px; padding-bottom: 10px; border-bottom: 2px solid #e5e7eb;">ERC20 Tokens</h2>
+        <!-- Tab Navigation -->
+        <div class="tab-container">
+        <div class="tab-nav">
+            <button class="tab-btn factory-tab active" onclick="switchTab('factory')">Factory</button>
+            <button class="tab-btn router-tab" onclick="switchTab('router')">Router</button>
+            <button class="tab-btn erc20-tab" onclick="switchTab('erc20')">Tokens</button>
+        </div>
+        <div class="tab-content">
+
+        <!-- ==================== ERC20 TOKENS TAB ==================== -->
+        <div id="erc20-tab" class="tab-panel">
+            <div class="section-header">
+                <h2>ERC20 Token Management</h2>
+                <p class="description">Deploy, upgrade, and manage tokens</p>
+            </div>
+
+            <!-- Factory Connection Status for Tokens Tab (hidden by default, shown if connection fails) -->
+            <div id="tokensFactoryNotice" class="info-box warning" style="margin-bottom: 12px; display: none;">
+                <strong>Factory not connected.</strong> Connect wallet first or check if you're on Amoy network.
+            </div>
+
         <div class="grid">
             <!-- Deploy ERC20 Token -->
             <div class="card" id="deployTokenCard">
@@ -268,18 +638,24 @@
                     <label>Decimals</label>
                     <input type="number" id="tokenDecimals" value="6" min="0" max="18" />
                 </div>
-                <div class="help-text" style="background: #dcfce7; padding: 10px; border-radius: 6px; margin-bottom: 12px; color: #16a34a;">
+                <div class="success-box">
                     You (the deployer) will automatically become the token admin with all roles.
                 </div>
                 <div class="form-group">
                     <label>Slug (unique number for CREATE2)</label>
                     <input type="number" id="tokenSlug" value="1" min="0" />
                     <div class="help-text">Use same slug across chains for deterministic addresses</div>
+                    <div class="warning-box" style="margin-top: 8px;">
+                        <strong>CREATE2 Security:</strong> Deploy Factory on ALL target chains FIRST before deploying any tokens.
+                    </div>
                 </div>
                 <button class="btn btn-success" onclick="deployToken()" id="deployTokenBtn">Deploy Token</button>
                 <button class="btn btn-secondary" onclick="computeAddress()">Compute Address</button>
                 <div id="deployResult" class="result hidden"></div>
-                <button class="btn btn-primary hidden" id="verifyDeployedBtn" onclick="verifyDeployedToken()" style="margin-top: 10px;">Verify on Explorer</button>
+                <div style="display: flex; gap: 10px; margin-top: 10px;">
+                    <button class="btn btn-primary hidden" id="verifyDeployedBtn" onclick="verifyDeployedToken()" style="flex: 1;">Verify on Explorer</button>
+                    <button class="btn btn-success hidden" id="configureDeployedBtn" onclick="configureLastDeployedToken()" style="flex: 1;">Configure for Bridge</button>
+                </div>
                 <div id="verifyResult" class="result hidden"></div>
             </div>
 
@@ -407,9 +783,48 @@
                 <div id="checkRoleResult" class="result hidden"></div>
             </div>
         </div>
+        </div><!-- End ERC20 Tab -->
 
-        <!-- ==================== FACTORY ADMIN SECTION ==================== -->
-        <h2 style="color: #4f46e5; margin: 40px 0 20px; padding-bottom: 10px; border-bottom: 2px solid #e5e7eb;">Factory Administration</h2>
+        <!-- ==================== FACTORY ADMIN TAB ==================== -->
+        <div id="factory-tab" class="tab-panel active">
+            <div class="section-header">
+                <h2>Factory Administration</h2>
+                <p class="description">Beacon, versions, roles, and deployment settings</p>
+            </div>
+
+            <!-- Factory Status -->
+            <div class="connection-panel" style="margin-bottom: 12px;">
+                <div class="connection-row">
+                    <div class="field" style="flex: 2;">
+                        <label>Factory Address (Amoy)</label>
+                        <input type="text" id="factoryAddress" placeholder="0x..." value="0x36C476af2cc41f90cC47902F973288fb925dD54B" />
+                    </div>
+                    <div class="connection-actions">
+                        <button class="btn-network" onclick="connectFactory()">Refresh</button>
+                        <span id="factoryStatus" class="status-pill disconnected"><span class="dot"></span>Not Connected</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Factory Roles Bar -->
+            <div class="roles-bar" id="rolesBar" style="display: none;">
+                <span class="label">Your Roles:</span>
+                <span id="roleAdmin" class="role-badge inactive">ADMIN</span>
+                <span id="roleDeployer" class="role-badge inactive">DEPLOYER</span>
+                <span id="roleBeaconUpgrader" class="role-badge inactive">BEACON_UPGRADER</span>
+                <span id="roleUpgrader" class="role-badge inactive">UPGRADER</span>
+                <span id="rolePauser" class="role-badge inactive">PAUSER</span>
+            </div>
+
+            <!-- Beacon Status -->
+            <div class="beacon-status not-initialized" id="beaconStatus" style="display: none;">
+                <div>
+                    <div class="status-text" id="beaconStatusText">Beacon not initialized</div>
+                    <div class="help-text" id="beaconHelpText">Deploy beacon to enable token deployment</div>
+                </div>
+                <div class="status-icon" id="beaconStatusIcon">&#9888;</div>
+            </div>
+
         <div class="grid">
             <!-- Factory Info -->
             <div class="card">
@@ -497,10 +912,10 @@
                 <div id="limitResult" class="result hidden"></div>
             </div>
 
-            <!-- Router Management -->
+            <!-- Router Management (Factory's V3 Router) -->
             <div class="card">
-                <h2>Router Management <span class="badge badge-role">ADMIN</span></h2>
-                <div class="help-text" style="margin-bottom: 15px;">Router is granted ROUTER_ROLE on new tokens.</div>
+                <h2>Factory Router (V3) <span class="badge badge-role">ADMIN</span></h2>
+                <div class="help-text" style="margin-bottom: 15px;">V3 Router is granted ROUTER_ROLE on new tokens automatically.</div>
                 <div class="form-group">
                     <label>New Router Address</label>
                     <input type="text" id="newRouter" placeholder="0x..." />
@@ -560,9 +975,138 @@
                 <div id="pauseResult" class="result hidden"></div>
             </div>
         </div>
+        </div><!-- End Factory Tab -->
+
+        <!-- ==================== ROUTER V5 TAB ==================== -->
+        <div id="router-tab" class="tab-panel">
+            <div class="section-header">
+                <h2>Router V5 Configuration</h2>
+                <p class="description">LayerZero bridge integration and token whitelist</p>
+            </div>
+        <div class="grid">
+            <!-- Router V5 Connection -->
+            <div class="card" id="routerV5Card">
+                <h2>Connect Router V5 <span class="badge badge-version">LayerZero</span></h2>
+                <div class="form-group">
+                    <label>Router V5 Address</label>
+                    <input type="text" id="routerV5Address" placeholder="0x... (ReforgeRouterV5 address)" value="0xFFa6B4F011ABF8cda18adA5449f438896e9C6eA3" />
+                    <div class="help-text">ReforgeRouterV5 with LayerZero integration</div>
+                </div>
+                <button class="btn btn-primary" onclick="connectRouterV5()">Connect Router V5</button>
+                <div id="routerV5Status" style="background: #f3f4f6; padding: 10px; border-radius: 6px; margin-top: 12px; font-size: 0.85em;">
+                    <span style="color: #666;">Router Status:</span>
+                    <span id="routerV5StatusText" style="color: #9ca3af;">Not connected</span>
+                </div>
+            </div>
+
+            <!-- Router V5 Info -->
+            <div class="card">
+                <h2>Router V5 Information</h2>
+                <div id="routerV5Info">
+                    <div class="info-row"><span class="info-label">Router Address</span><span class="info-value address" id="infoRouterV5Addr">-</span></div>
+                    <div class="info-row"><span class="info-label">LZ Paused</span><span class="info-value" id="infoRouterPaused">-</span></div>
+                    <div class="info-row"><span class="info-label">Fee Treasury</span><span class="info-value address" id="infoRouterTreasury">-</span></div>
+                    <div class="info-row"><span class="info-label">Required Signatures</span><span class="info-value" id="infoRouterSigs">-</span></div>
+                    <div class="info-row"><span class="info-label">Your Role</span><span class="info-value" id="infoRouterYourRole">-</span></div>
+                </div>
+                <button class="btn btn-secondary" onclick="refreshRouterV5Info()">Refresh Router Info</button>
+            </div>
+
+            <!-- Configure Token for Bridge (One-Click) -->
+            <div class="card">
+                <h2>Configure Token for Bridge <span class="badge badge-role">ONE-CLICK</span></h2>
+                <div class="info-box warning">
+                    After deploying a token, you must:<br>
+                    1. Grant ROUTER_ROLE on the token to the router<br>
+                    2. Add token to router's bridgeable whitelist<br><br>
+                    <strong>This button does both steps automatically.</strong>
+                </div>
+                <div class="form-group">
+                    <label>Token Address</label>
+                    <input type="text" id="configureTokenAddr" placeholder="0x..." />
+                </div>
+                <button class="btn btn-success" onclick="configureTokenForBridge(this)">Configure for Bridge</button>
+                <div id="configureResult" class="result hidden"></div>
+            </div>
+
+            <!-- Grant ROUTER_ROLE -->
+            <div class="card">
+                <h2>Grant ROUTER_ROLE <span class="badge badge-role">TOKEN ADMIN</span></h2>
+                <div class="help-text" style="margin-bottom: 12px;">
+                    Grants the router permission to mint/burn tokens on behalf of bridge operations.
+                </div>
+                <div class="form-group">
+                    <label>Token Address</label>
+                    <input type="text" id="grantRouterRoleTokenAddr" placeholder="0x..." />
+                </div>
+                <button class="btn btn-primary" onclick="grantRouterRole(this)">Grant ROUTER_ROLE</button>
+                <div id="grantRouterRoleResult" class="result hidden"></div>
+            </div>
+
+            <!-- Add to Whitelist -->
+            <div class="card">
+                <h2>Add to Bridgeable Whitelist <span class="badge badge-role">ROUTER ADMIN</span></h2>
+                <div class="help-text" style="margin-bottom: 12px;">
+                    Adds a token to the router's list of tokens that can be bridged cross-chain.
+                </div>
+                <div class="form-group">
+                    <label>Token Address</label>
+                    <input type="text" id="addWhitelistTokenAddr" placeholder="0x..." />
+                </div>
+                <button class="btn btn-warning" onclick="addToBridgeable(this)">Add to Whitelist</button>
+                <div id="addWhitelistResult" class="result hidden"></div>
+            </div>
+
+            <!-- Check Token Status -->
+            <div class="card">
+                <h2>Check Token Bridge Status</h2>
+                <div class="help-text" style="margin-bottom: 12px;">
+                    Check if a token has ROUTER_ROLE granted and is in the bridgeable whitelist.
+                </div>
+                <div class="form-group">
+                    <label>Token Address</label>
+                    <input type="text" id="checkStatusTokenAddr" placeholder="0x..." />
+                </div>
+                <button class="btn btn-secondary" onclick="checkTokenBridgeStatus(this)">Check Status</button>
+                <div id="checkStatusResult" class="result hidden"></div>
+            </div>
+
+            <!-- Remove from Whitelist -->
+            <div class="card">
+                <h2>Remove from Whitelist <span class="badge badge-role">ROUTER ADMIN</span></h2>
+                <div class="help-text" style="margin-bottom: 12px;">
+                    Removes a token from the bridgeable whitelist. The token will no longer be bridgeable.
+                </div>
+                <div class="form-group">
+                    <label>Token Address</label>
+                    <input type="text" id="removeWhitelistTokenAddr" placeholder="0x..." />
+                </div>
+                <button class="btn btn-danger" onclick="removeFromBridgeable(this)">Remove from Whitelist</button>
+                <div id="removeWhitelistResult" class="result hidden"></div>
+            </div>
+        </div>
+        </div><!-- End Router Tab -->
+        </div><!-- End Tab Content -->
+        </div><!-- End Tab Container -->
     </div>
 
     <script>
+        // Tab switching function
+        function switchTab(tabName) {
+            // Hide all tab panels
+            document.querySelectorAll('.tab-panel').forEach(panel => {
+                panel.classList.remove('active');
+            });
+            // Deactivate all tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            // Show selected tab panel
+            document.getElementById(tabName + '-tab').classList.add('active');
+            // Activate selected tab button
+            document.querySelector('.' + tabName + '-tab').classList.add('active');
+        }
+
         // Factory ABI - Updated to match FactoryV1.sol
         const FACTORY_ABI = [
             // View functions
@@ -623,8 +1167,55 @@
             "function symbol() view returns (string)",
             "function decimals() view returns (uint8)",
             "function totalSupply() view returns (uint256)",
-            "function paused() view returns (bool)"
+            "function paused() view returns (bool)",
+            // Role management
+            "function ROUTER_ROLE() view returns (bytes32)",
+            "function DEFAULT_ADMIN_ROLE() view returns (bytes32)",
+            "function hasRole(bytes32 role, address account) view returns (bool)",
+            "function grantRole(bytes32 role, address account)",
+            "function revokeRole(bytes32 role, address account)"
         ];
+
+        // Router V5 ABI - ReforgeRouterV5 with LayerZero
+        const ROUTER_V5_ABI = [
+            // View functions
+            "function lzPaused() view returns (bool)",
+            "function feeTreasury() view returns (address)",
+            "function signers() view returns (address[])",
+            "function requiredSignatures() view returns (uint256)",
+            "function isBridgeableToken(address token) view returns (bool)",
+            "function isPeer(uint32 eid, bytes32 peer) view returns (bool)",
+            "function peers(uint32 eid) view returns (bytes32)",
+            "function SEND_GAS_LIMIT() view returns (uint128)",
+            "function oAppVersion() view returns (uint64, uint64)",
+            // Role constants
+            "function DEFAULT_ADMIN_ROLE() view returns (bytes32)",
+            "function UPGRADER_ROLE() view returns (bytes32)",
+            "function PAUSER_ROLE() view returns (bytes32)",
+            "function ERC20_FACTORY_ROLE() view returns (bytes32)",
+            // AccessControl
+            "function hasRole(bytes32 role, address account) view returns (bool)",
+            "function grantRole(bytes32 role, address account)",
+            "function revokeRole(bytes32 role, address account)",
+            // Write functions
+            "function addBridgeableToken(address token)",
+            "function removeBridgeableToken(address token)",
+            "function setPeer(uint32 eid, bytes32 peer)",
+            "function setLzPaused(bool paused)",
+            "function setFeeTreasury(address treasury)",
+            "function addSigner(address signer)",
+            "function removeSigner(address signer)",
+            "function setRequiredSignatures(uint256 required)",
+            // Quote functions
+            "function quoteSend(address token, address recipient, bytes payload, uint32 dstEid) view returns (uint256)",
+            // Events
+            "event BridgeableTokenAdded(address indexed token)",
+            "event BridgeableTokenRemoved(address indexed token)",
+            "event LzPauseStateChanged(address indexed account, bool paused)",
+            "event PeerSet(uint32 eid, bytes32 peer)"
+        ];
+
+        let routerV5 = null;
 
         let provider = null;
         let signer = null;
@@ -649,14 +1240,9 @@
             }
         }
 
-        async function connect() {
-            const factoryAddr = document.getElementById('factoryAddress').value.trim();
+        // Connect Wallet only (no factory auto-connect)
+        async function connectWalletOnly() {
             const rpcUrl = document.getElementById('rpcUrl').value.trim();
-
-            if (!factoryAddr || !ethers.isAddress(factoryAddr)) {
-                alert('Please enter a valid factory address');
-                return;
-            }
 
             try {
                 if (window.ethereum) {
@@ -670,11 +1256,10 @@
                     if (accounts.length > 0) {
                         signer = await provider.getSigner(0);
                         signerAddress = await signer.getAddress();
+                    } else {
+                        signerAddress = null;
                     }
                 }
-
-                factory = new ethers.Contract(factoryAddr, FACTORY_ABI, signer || provider);
-                await factory.getDeployedTokensCount();
 
                 // Get network info
                 const network = await provider.getNetwork();
@@ -683,35 +1268,75 @@
                                    network.chainId === 1n ? 'Ethereum' :
                                    `Chain ${network.chainId}`;
 
-                document.getElementById('connectionStatus').textContent =
-                    signer ? `${signerAddress.slice(0, 6)}...${signerAddress.slice(-4)} (${networkName})` : `Read-only (${networkName})`;
-                document.getElementById('connectionStatus').className = 'status connected';
+                const statusText = signer ? `${signerAddress.slice(0, 6)}...${signerAddress.slice(-4)} (${networkName})` : `Read-only (${networkName})`;
+                document.getElementById('connectionStatus').className = 'status-pill connected';
+                document.getElementById('connectionStatus').innerHTML = '<span class="dot"></span>' + statusText;
+
+            } catch (error) {
+                console.error('Wallet connection error:', error);
+                document.getElementById('connectionStatus').className = 'status-pill disconnected';
+                document.getElementById('connectionStatus').innerHTML = '<span class="dot"></span>Connection Failed';
+                throw error;
+            }
+        }
+
+        // Connect Wallet and auto-connect to Factory
+        async function connectWallet() {
+            try {
+                await connectWalletOnly();
+
+                // Auto-connect to Factory if address is provided
+                const factoryAddr = document.getElementById('factoryAddress').value.trim();
+                if (factoryAddr && ethers.isAddress(factoryAddr)) {
+                    await connectFactory();
+                }
+            } catch (error) {
+                alert('Failed to connect wallet: ' + error.message);
+            }
+        }
+
+        // Connect to Factory contract
+        async function connectFactory() {
+            const factoryAddr = document.getElementById('factoryAddress').value.trim();
+
+            if (!factoryAddr || !ethers.isAddress(factoryAddr)) {
+                alert('Please enter a valid factory address');
+                return;
+            }
+
+            // Connect wallet first if not connected
+            if (!provider) {
+                await connectWalletOnly();
+            }
+
+            if (!provider) {
+                alert('Please connect wallet first');
+                return;
+            }
+
+            try {
+                factory = new ethers.Contract(factoryAddr, FACTORY_ABI, signer || provider);
+                await factory.getDeployedTokensCount(); // Test connection
+
+                document.getElementById('factoryStatus').className = 'status-pill connected';
+                document.getElementById('factoryStatus').innerHTML = '<span class="dot"></span>Connected';
+
+                // Hide the "Factory not connected" notice on Tokens tab
+                document.getElementById('tokensFactoryNotice').style.display = 'none';
 
                 await checkRoles();
                 await checkBeaconStatus();
                 await refreshInfo();
                 await loadTokens();
-                                await updateDeployerLimits();
+                await updateDeployerLimits();
 
             } catch (error) {
-                console.error('Connection error:', error);
-                document.getElementById('connectionStatus').textContent = 'Connection Failed';
-                document.getElementById('connectionStatus').className = 'status disconnected';
+                console.error('Factory connection error:', error);
+                document.getElementById('factoryStatus').className = 'status-pill disconnected';
+                document.getElementById('factoryStatus').innerHTML = '<span class="dot"></span>Failed';
 
-                // Check if it's a BAD_DATA error (contract not found on network)
-                if (error.code === 'BAD_DATA' || error.message.includes('could not decode')) {
-                    let networkInfo = '';
-                    try {
-                        const network = await provider.getNetwork();
-                        networkInfo = `\n\nYour wallet is connected to Chain ID: ${network.chainId}`;
-                        if (network.chainId !== 80002n) {
-                            networkInfo += '\n\nPlease switch MetaMask to Polygon Amoy (Chain ID: 80002)';
-                        }
-                    } catch (e) {}
-                    alert('Failed to connect: Contract not found at this address on the current network.' + networkInfo);
-                } else {
-                    alert('Failed to connect: ' + error.message);
-                }
+                // Show notice on Tokens tab
+                document.getElementById('tokensFactoryNotice').style.display = 'block';
             }
         }
 
@@ -1252,6 +1877,12 @@
                     document.getElementById('infoDefaultLimit').textContent = defaultLimit.toString();
                     document.getElementById('infoPaused').textContent = paused ? 'Yes' : 'No';
                 }
+                // Try to connect to Router V5
+                const router = isInit ? await factory.router() : null;
+                if (router && router !== ethers.ZeroAddress) {
+                    await connectToRouterV5(router);
+                }
+
             } catch (error) {
                 console.error('Error refreshing info:', error);
             }
@@ -1397,8 +2028,19 @@
                         network: getNetworkName(network.chainId)
                     };
 
-                    // Show verify button
+                    // Show verify button and configure button
                     document.getElementById('verifyDeployedBtn').classList.remove('hidden');
+                    document.getElementById('configureDeployedBtn').classList.remove('hidden');
+
+                    // Auto-fill configure token address
+                    document.getElementById('configureTokenAddr').value = tokenAddress;
+                    document.getElementById('bridgeTokenAddr').value = tokenAddress;
+
+                    // Check if router is set and suggest configuration
+                    const routerAddr = await factory.router();
+                    if (routerAddr && routerAddr !== ethers.ZeroAddress) {
+                        resultEl.textContent += `\n\n⚠️ Router detected! Click "Configure for Bridge" to enable cross-chain bridging.`;
+                    }
                 } else {
                     resultEl.textContent = `Token deployed!\nTx: ${tx.hash}`;
                     resultEl.className = 'result success';
@@ -1554,6 +2196,8 @@
                 resultEl.textContent = `Router updated to: ${newRouter}`;
                 resultEl.className = 'result success';
                 await refreshInfo();
+                // Also refresh router V5 info
+                await refreshRouterV5Info();
             } catch (error) {
                 resultEl.textContent = `Error: ${error.reason || error.message}`;
                 resultEl.className = 'result error';
@@ -1561,6 +2205,381 @@
                 setButtonLoading(btn, false);
             }
         }
+
+        // ==================== ROUTER V5 FUNCTIONS ====================
+
+        // User-triggered connect from input field
+        async function connectRouterV5() {
+            const routerAddr = document.getElementById('routerV5Address').value.trim();
+            if (!routerAddr || !ethers.isAddress(routerAddr)) {
+                alert('Please enter a valid Router V5 address');
+                return;
+            }
+            await connectToRouterV5(routerAddr);
+        }
+
+        async function connectToRouterV5(routerAddr) {
+            if (!routerAddr || routerAddr === ethers.ZeroAddress) {
+                routerV5 = null;
+                document.getElementById('routerV5StatusText').textContent = 'No router configured';
+                document.getElementById('routerV5StatusText').style.color = '#9ca3af';
+                return;
+            }
+
+            try {
+                routerV5 = new ethers.Contract(routerAddr, ROUTER_V5_ABI, signer || provider);
+                // Test the connection
+                await routerV5.lzPaused();
+                document.getElementById('routerV5StatusText').textContent = `Connected: ${routerAddr.slice(0,6)}...${routerAddr.slice(-4)}`;
+                document.getElementById('routerV5StatusText').style.color = '#22c55e';
+                await refreshRouterV5Info();
+            } catch (e) {
+                console.error('Router V5 connection error:', e);
+                routerV5 = null;
+                document.getElementById('routerV5StatusText').textContent = 'Connection failed (not a V5 router?)';
+                document.getElementById('routerV5StatusText').style.color = '#ef4444';
+            }
+        }
+
+        async function refreshRouterV5Info() {
+            if (!routerV5) {
+                // Try to connect using the Router V5 input field
+                const routerAddr = document.getElementById('routerV5Address').value.trim();
+                if (routerAddr && ethers.isAddress(routerAddr)) {
+                    await connectToRouterV5(routerAddr);
+                }
+                if (!routerV5) return;
+            }
+
+            try {
+                const [lzPaused, treasury, signers, requiredSigs] = await Promise.all([
+                    routerV5.lzPaused(),
+                    routerV5.feeTreasury(),
+                    routerV5.signers(),
+                    routerV5.requiredSignatures()
+                ]);
+
+                document.getElementById('infoRouterV5Addr').textContent = await routerV5.getAddress();
+                document.getElementById('infoRouterPaused').textContent = lzPaused ? 'Yes ⚠️' : 'No ✓';
+                document.getElementById('infoRouterPaused').style.color = lzPaused ? '#ef4444' : '#22c55e';
+                document.getElementById('infoRouterTreasury').textContent = treasury;
+                document.getElementById('infoRouterSigs').textContent = `${requiredSigs} of ${signers.length}`;
+
+                // Check user's roles
+                if (signerAddress) {
+                    const [adminRole, pauserRole, factoryRole] = await Promise.all([
+                        routerV5.DEFAULT_ADMIN_ROLE(),
+                        routerV5.PAUSER_ROLE(),
+                        routerV5.ERC20_FACTORY_ROLE()
+                    ]);
+                    const [hasAdmin, hasPauser, hasFactory] = await Promise.all([
+                        routerV5.hasRole(adminRole, signerAddress),
+                        routerV5.hasRole(pauserRole, signerAddress),
+                        routerV5.hasRole(factoryRole, signerAddress)
+                    ]);
+                    const rolesList = [];
+                    if (hasAdmin) rolesList.push('ADMIN');
+                    if (hasPauser) rolesList.push('PAUSER');
+                    if (hasFactory) rolesList.push('FACTORY');
+                    document.getElementById('infoRouterYourRole').textContent = rolesList.length > 0 ? rolesList.join(', ') : 'None';
+                    document.getElementById('infoRouterYourRole').style.color = rolesList.length > 0 ? '#22c55e' : '#9ca3af';
+                }
+            } catch (e) {
+                console.error('Error refreshing router V5 info:', e);
+            }
+        }
+
+        async function configureTokenForBridge(btn) {
+            if (!signer) return alert('Please connect with a wallet first');
+
+            const tokenAddr = document.getElementById('configureTokenAddr').value.trim();
+            const resultEl = document.getElementById('configureResult');
+            resultEl.classList.remove('hidden');
+
+            if (!tokenAddr || !ethers.isAddress(tokenAddr)) {
+                resultEl.textContent = 'Please enter a valid token address';
+                resultEl.className = 'result error';
+                return;
+            }
+
+            // Get router address from Router V5 input field (separate from Factory's V3 router)
+            let routerAddr = document.getElementById('routerV5Address').value.trim();
+            if (!routerAddr || !ethers.isAddress(routerAddr)) {
+                resultEl.textContent = 'Error: Please enter Router V5 address and click "Connect Router V5" first.';
+                resultEl.className = 'result error';
+                return;
+            }
+
+            setButtonLoading(btn, true);
+
+            try {
+                const token = new ethers.Contract(tokenAddr, TOKEN_ABI, signer);
+                const routerRole = await token.ROUTER_ROLE();
+
+                // Check if already configured
+                const hasRouterRole = await token.hasRole(routerRole, routerAddr);
+
+                resultEl.textContent = 'Step 1/2: Granting ROUTER_ROLE to router...';
+                resultEl.className = 'result';
+
+                if (!hasRouterRole) {
+                    const tx1 = await token.grantRole(routerRole, routerAddr);
+                    resultEl.textContent = `Step 1/2: Tx sent ${tx1.hash.slice(0,10)}... waiting...`;
+                    await tx1.wait();
+                    resultEl.textContent = 'Step 1/2: ROUTER_ROLE granted ✓\nStep 2/2: Adding to router whitelist...';
+                } else {
+                    resultEl.textContent = 'Step 1/2: ROUTER_ROLE already granted ✓\nStep 2/2: Adding to router whitelist...';
+                }
+
+                // Step 2: Add to router's bridgeable whitelist
+                if (!routerV5) {
+                    await connectToRouterV5(routerAddr);
+                }
+
+                if (routerV5) {
+                    const isBridgeable = await routerV5.isBridgeableToken(tokenAddr);
+                    if (!isBridgeable) {
+                        const tx2 = await routerV5.addBridgeableToken(tokenAddr);
+                        resultEl.textContent += `\nTx sent ${tx2.hash.slice(0,10)}... waiting...`;
+                        await tx2.wait();
+                        resultEl.textContent = `✓ Token configured for bridging!\n\nROUTER_ROLE: Granted\nWhitelist: Added\n\nToken: ${tokenAddr}\nRouter: ${routerAddr}`;
+                        resultEl.className = 'result success';
+                    } else {
+                        resultEl.textContent = `✓ Token already configured for bridging!\n\nROUTER_ROLE: ${hasRouterRole ? 'Already granted' : 'Granted'}\nWhitelist: Already added\n\nToken: ${tokenAddr}`;
+                        resultEl.className = 'result success';
+                    }
+                } else {
+                    resultEl.textContent += '\n\n⚠️ Could not add to router whitelist.\nRouter may not be V5 or you need ERC20_FACTORY_ROLE on router.';
+                    resultEl.className = 'result';
+                }
+
+            } catch (error) {
+                resultEl.textContent = `Error: ${error.reason || error.message}`;
+                resultEl.className = 'result error';
+            } finally {
+                setButtonLoading(btn, false);
+            }
+        }
+
+        async function grantRouterRole(btn) {
+            if (!signer) return alert('Please connect with a wallet first');
+
+            const tokenAddr = document.getElementById('grantRouterRoleTokenAddr').value.trim();
+            const resultEl = document.getElementById('grantRouterRoleResult');
+            resultEl.classList.remove('hidden');
+
+            if (!tokenAddr || !ethers.isAddress(tokenAddr)) {
+                resultEl.textContent = 'Please enter a valid token address';
+                resultEl.className = 'result error';
+                return;
+            }
+
+            // Get router address from Router V5 input field
+            let routerAddr = document.getElementById('routerV5Address').value.trim();
+            if (!routerAddr || !ethers.isAddress(routerAddr)) {
+                resultEl.textContent = 'Error: Please enter Router V5 address and click "Connect Router V5" first.';
+                resultEl.className = 'result error';
+                return;
+            }
+
+            setButtonLoading(btn, true);
+
+            try {
+                const token = new ethers.Contract(tokenAddr, TOKEN_ABI, signer);
+                const routerRole = await token.ROUTER_ROLE();
+
+                const tx = await token.grantRole(routerRole, routerAddr);
+                resultEl.textContent = `Transaction sent: ${tx.hash}\nWaiting...`;
+                await tx.wait();
+                resultEl.textContent = `✓ ROUTER_ROLE granted to Router V5!\n\nToken: ${tokenAddr}\nRouter V5: ${routerAddr}`;
+                resultEl.className = 'result success';
+            } catch (error) {
+                resultEl.textContent = `Error: ${error.reason || error.message}`;
+                resultEl.className = 'result error';
+            } finally {
+                setButtonLoading(btn, false);
+            }
+        }
+
+        async function addToBridgeable(btn) {
+            if (!signer) return alert('Please connect with a wallet first');
+
+            const tokenAddr = document.getElementById('addWhitelistTokenAddr').value.trim();
+            const resultEl = document.getElementById('addWhitelistResult');
+            resultEl.classList.remove('hidden');
+
+            if (!tokenAddr || !ethers.isAddress(tokenAddr)) {
+                resultEl.textContent = 'Please enter a valid token address';
+                resultEl.className = 'result error';
+                return;
+            }
+
+            if (!routerV5) {
+                // Try to connect using the Router V5 input field
+                const routerAddr = document.getElementById('routerV5Address').value.trim();
+                if (routerAddr && ethers.isAddress(routerAddr)) {
+                    await connectToRouterV5(routerAddr);
+                }
+            }
+
+            if (!routerV5) {
+                resultEl.textContent = 'Error: Router V5 not connected. Enter Router V5 address and click "Connect Router V5" first.';
+                resultEl.className = 'result error';
+                return;
+            }
+
+            setButtonLoading(btn, true);
+
+            try {
+                const tx = await routerV5.addBridgeableToken(tokenAddr);
+                resultEl.textContent = `Transaction sent: ${tx.hash}\nWaiting...`;
+                await tx.wait();
+                resultEl.textContent = `✓ Token added to bridgeable whitelist!\n\nToken: ${tokenAddr}`;
+                resultEl.className = 'result success';
+            } catch (error) {
+                resultEl.textContent = `Error: ${error.reason || error.message}`;
+                resultEl.className = 'result error';
+            } finally {
+                setButtonLoading(btn, false);
+            }
+        }
+
+        async function removeFromBridgeable(btn) {
+            if (!signer) return alert('Please connect with a wallet first');
+
+            const tokenAddr = document.getElementById('removeWhitelistTokenAddr').value.trim();
+            const resultEl = document.getElementById('removeWhitelistResult');
+            resultEl.classList.remove('hidden');
+
+            if (!tokenAddr || !ethers.isAddress(tokenAddr)) {
+                resultEl.textContent = 'Please enter a valid token address';
+                resultEl.className = 'result error';
+                return;
+            }
+
+            if (!routerV5) {
+                resultEl.textContent = 'Error: Router V5 not connected';
+                resultEl.className = 'result error';
+                return;
+            }
+
+            setButtonLoading(btn, true);
+
+            try {
+                const tx = await routerV5.removeBridgeableToken(tokenAddr);
+                resultEl.textContent = `Transaction sent: ${tx.hash}\nWaiting...`;
+                await tx.wait();
+                resultEl.textContent = `✓ Token removed from bridgeable whitelist!\n\nToken: ${tokenAddr}`;
+                resultEl.className = 'result success';
+            } catch (error) {
+                resultEl.textContent = `Error: ${error.reason || error.message}`;
+                resultEl.className = 'result error';
+            } finally {
+                setButtonLoading(btn, false);
+            }
+        }
+
+        async function checkTokenBridgeStatus(btn) {
+            const tokenAddr = document.getElementById('checkStatusTokenAddr').value.trim();
+            const resultEl = document.getElementById('checkStatusResult');
+            resultEl.classList.remove('hidden');
+
+            if (!tokenAddr || !ethers.isAddress(tokenAddr)) {
+                resultEl.textContent = 'Please enter a valid token address';
+                resultEl.className = 'result error';
+                return;
+            }
+
+            setButtonLoading(btn, true);
+
+            try {
+                // Get Router V5 address from input field
+                let routerAddr = document.getElementById('routerV5Address').value.trim();
+                if (!routerAddr || !ethers.isAddress(routerAddr)) {
+                    resultEl.textContent = 'Please enter Router V5 address and click "Connect Router V5" first.';
+                    resultEl.className = 'result error';
+                    setButtonLoading(btn, false);
+                    return;
+                }
+
+                let hasRouterRole = false;
+                let isBridgeable = false;
+
+                // Check ROUTER_ROLE on token
+                try {
+                    const token = new ethers.Contract(tokenAddr, TOKEN_ABI, provider || new ethers.JsonRpcProvider(document.getElementById('rpcUrl').value.trim()));
+                    const routerRole = await token.ROUTER_ROLE();
+                    hasRouterRole = await token.hasRole(routerRole, routerAddr);
+                } catch (e) {
+                    console.error('Error checking token role:', e);
+                }
+
+                // Check bridgeable status
+                if (!routerV5) {
+                    await connectToRouterV5(routerAddr);
+                }
+                if (routerV5) {
+                    try {
+                        isBridgeable = await routerV5.isBridgeableToken(tokenAddr);
+                    } catch (e) {}
+                }
+
+                const routerRoleStatus = hasRouterRole ? '✓ Granted' : '✗ Not granted';
+                const bridgeableStatus = isBridgeable ? '✓ Whitelisted' : '✗ Not whitelisted';
+                const readyStatus = hasRouterRole && isBridgeable ? '✓ READY FOR BRIDGING' : '⚠️ NOT READY';
+
+                resultEl.innerHTML = `
+                    <strong>Token Bridge Status</strong><br><br>
+                    Token: ${tokenAddr.slice(0,10)}...${tokenAddr.slice(-8)}<br>
+                    Router: ${routerAddr ? routerAddr.slice(0,10) + '...' + routerAddr.slice(-8) : 'Not set'}<br><br>
+                    ROUTER_ROLE: <span style="color: ${hasRouterRole ? '#22c55e' : '#ef4444'}">${routerRoleStatus}</span><br>
+                    Whitelist: <span style="color: ${isBridgeable ? '#22c55e' : '#ef4444'}">${bridgeableStatus}</span><br><br>
+                    <strong style="color: ${hasRouterRole && isBridgeable ? '#22c55e' : '#f59e0b'}">${readyStatus}</strong>
+                `;
+                resultEl.className = hasRouterRole && isBridgeable ? 'result success' : 'result';
+
+            } catch (error) {
+                resultEl.textContent = `Error: ${error.reason || error.message}`;
+                resultEl.className = 'result error';
+            } finally {
+                setButtonLoading(btn, false);
+            }
+        }
+
+        async function configureLastDeployedToken() {
+            if (!lastDeployedToken || !lastDeployedToken.tokenAddress) {
+                alert('No recently deployed token found');
+                return;
+            }
+
+            // Switch to Router tab
+            switchTab('router');
+
+            // Set the token address in the configure input
+            document.getElementById('configureTokenAddr').value = lastDeployedToken.tokenAddress;
+
+            // Scroll to the Configure Token for Bridge card (first card with btn-success in Router tab)
+            setTimeout(() => {
+                const configureCard = document.querySelector('#router-tab .card:nth-child(3)');
+                if (configureCard) {
+                    configureCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                    // Highlight the card briefly
+                    configureCard.style.boxShadow = '0 0 0 3px #22c55e';
+                    setTimeout(() => {
+                        configureCard.style.boxShadow = '';
+                    }, 2000);
+
+                    // Auto-click the configure button
+                    setTimeout(() => {
+                        const btn = configureCard.querySelector('button.btn-success');
+                        if (btn) btn.click();
+                    }, 500);
+                }
+            }, 100);
+        }
+
+        // ==================== END ROUTER V5 FUNCTIONS ====================
 
         async function addImplementation(btn) {
             if (!factory || !signer) return alert('Please connect with a wallet first');
@@ -1918,12 +2937,12 @@
         window.addEventListener('load', async () => {
             if (window.ethereum) {
                 document.getElementById('rpcUrl').placeholder = 'MetaMask detected - will use wallet';
-                // Auto-connect if wallet is available
+                // Auto-connect wallet if already authorized
                 try {
                     const accounts = await window.ethereum.request({ method: 'eth_accounts' });
                     if (accounts.length > 0) {
-                        // Wallet already connected, auto-connect
-                        connect();
+                        // Wallet already connected, auto-connect wallet only
+                        await connectWallet();
                     }
                 } catch (e) {
                     console.log('Auto-connect check failed:', e);
