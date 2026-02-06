@@ -1164,6 +1164,51 @@
                 <button class="btn btn-success" onclick="grantFactoryRole(this)">Grant Factory Role</button>
                 <div id="grantFactoryRoleResult" class="result hidden"></div>
             </div>
+
+            <!-- Set Peer (LayerZero Cross-Chain) -->
+            <div class="card">
+                <h2>Set Peer <span class="badge badge-role">ADMIN</span></h2>
+                <div class="help-text" style="margin-bottom: 12px;">
+                    Connect this router to a peer router on another chain for LayerZero cross-chain bridging.
+                    <br><strong>Note:</strong> Must be set on BOTH chains (bidirectional).
+                </div>
+                <div class="form-group">
+                    <label>Destination Chain</label>
+                    <select id="peerDestChain" onchange="updatePeerAddress()">
+                        <option value="">-- Select Chain --</option>
+                        <option value="40267">Amoy (Polygon Testnet) - EID 40267</option>
+                        <option value="40102">BSC Testnet - EID 40102</option>
+                        <option value="40161">Sepolia (Ethereum) - EID 40161</option>
+                        <option value="40231">Arbitrum Sepolia - EID 40231</option>
+                        <option value="40232">Optimism Sepolia - EID 40232</option>
+                        <option value="40245">Base Sepolia - EID 40245</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Peer Router Address</label>
+                    <input type="text" id="peerRouterAddr" placeholder="0x..." value="0xFFa6B4F011ABF8cda18adA5449f438896e9C6eA3" />
+                    <div class="help-text" style="margin-top: 4px; font-size: 0.8em;">
+                        Default: Same as current router (deterministic CREATE2 deployment)
+                    </div>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn btn-success" onclick="setPeer(this)">Set Peer</button>
+                    <button class="btn btn-secondary" onclick="checkPeer(this)">Check Peer</button>
+                </div>
+                <div id="setPeerResult" class="result hidden"></div>
+            </div>
+
+            <!-- Peer Status -->
+            <div class="card">
+                <h2>Peer Status</h2>
+                <div class="help-text" style="margin-bottom: 12px;">
+                    View configured peers for this router.
+                </div>
+                <div id="peerStatusList" style="font-family: monospace; font-size: 0.85em;">
+                    <p style="color: #666;">Click "Refresh Peers" to load</p>
+                </div>
+                <button class="btn btn-secondary" onclick="refreshPeerStatus(this)">Refresh Peers</button>
+            </div>
         </div>
         </div><!-- End Router Tab -->
         </div><!-- End Tab Content -->
@@ -2799,6 +2844,207 @@
                 resultEl.className = 'result error';
             } finally {
                 setButtonLoading(btn, false);
+            }
+        }
+
+        // LayerZero Chain Configuration
+        const LZ_CHAINS = {
+            40267: { name: 'Amoy', chainId: 80002 },
+            40102: { name: 'BSC Testnet', chainId: 97 },
+            40161: { name: 'Sepolia', chainId: 11155111 },
+            40231: { name: 'Arbitrum Sepolia', chainId: 421614 },
+            40232: { name: 'Optimism Sepolia', chainId: 11155420 },
+            40245: { name: 'Base Sepolia', chainId: 84532 }
+        };
+
+        // Default router address (same on all chains due to CREATE2)
+        const DEFAULT_ROUTER_ADDRESS = '0xFFa6B4F011ABF8cda18adA5449f438896e9C6eA3';
+
+        // Convert address to bytes32 (for LayerZero setPeer)
+        function addressToBytes32(address) {
+            return '0x' + '0'.repeat(24) + address.slice(2).toLowerCase();
+        }
+
+        // Convert bytes32 to address
+        function bytes32ToAddress(bytes32) {
+            if (bytes32 === '0x' + '0'.repeat(64)) return null;
+            return '0x' + bytes32.slice(26);
+        }
+
+        function updatePeerAddress() {
+            // Auto-fill with default router address when chain is selected
+            document.getElementById('peerRouterAddr').value = DEFAULT_ROUTER_ADDRESS;
+        }
+
+        async function setPeer(btn) {
+            if (!signer) return alert('Please connect with a wallet first');
+
+            const destEid = document.getElementById('peerDestChain').value;
+            const peerAddr = document.getElementById('peerRouterAddr').value.trim();
+            const resultEl = document.getElementById('setPeerResult');
+            resultEl.classList.remove('hidden');
+
+            if (!destEid) {
+                resultEl.textContent = 'Please select a destination chain';
+                resultEl.className = 'result error';
+                return;
+            }
+
+            if (!peerAddr || !ethers.isAddress(peerAddr)) {
+                resultEl.textContent = 'Please enter a valid peer router address';
+                resultEl.className = 'result error';
+                return;
+            }
+
+            if (!routerV5) {
+                const routerAddr = document.getElementById('routerV5Address').value.trim();
+                if (routerAddr && ethers.isAddress(routerAddr)) {
+                    await connectToRouterV5(routerAddr);
+                }
+            }
+
+            if (!routerV5) {
+                resultEl.textContent = 'Error: Router V5 not connected';
+                resultEl.className = 'result error';
+                return;
+            }
+
+            // Check if trying to set peer to own chain
+            const network = await provider.getNetwork();
+            const currentChainId = Number(network.chainId);
+            const destChainInfo = LZ_CHAINS[destEid];
+            if (destChainInfo && destChainInfo.chainId === currentChainId) {
+                resultEl.textContent = 'Error: Cannot set peer to the same chain';
+                resultEl.className = 'result error';
+                return;
+            }
+
+            setButtonLoading(btn, true);
+
+            try {
+                const peerBytes32 = addressToBytes32(peerAddr);
+                const tx = await routerV5.setPeer(destEid, peerBytes32);
+                resultEl.textContent = `Transaction sent: ${tx.hash}\nWaiting...`;
+                await tx.wait();
+                resultEl.textContent = `✓ Peer set successfully!\n\nDestination: ${LZ_CHAINS[destEid]?.name || 'Unknown'} (EID ${destEid})\nPeer Router: ${peerAddr}`;
+                resultEl.className = 'result success';
+                await refreshPeerStatus();
+            } catch (error) {
+                resultEl.textContent = `Error: ${error.reason || error.message}`;
+                resultEl.className = 'result error';
+            } finally {
+                setButtonLoading(btn, false);
+            }
+        }
+
+        async function checkPeer(btn) {
+            const destEid = document.getElementById('peerDestChain').value;
+            const resultEl = document.getElementById('setPeerResult');
+            resultEl.classList.remove('hidden');
+
+            if (!destEid) {
+                resultEl.textContent = 'Please select a destination chain';
+                resultEl.className = 'result error';
+                return;
+            }
+
+            if (!routerV5) {
+                const routerAddr = document.getElementById('routerV5Address').value.trim();
+                if (routerAddr && ethers.isAddress(routerAddr)) {
+                    await connectToRouterV5(routerAddr);
+                }
+            }
+
+            if (!routerV5) {
+                resultEl.textContent = 'Error: Router V5 not connected';
+                resultEl.className = 'result error';
+                return;
+            }
+
+            setButtonLoading(btn, true);
+
+            try {
+                const peerBytes32 = await routerV5.peers(destEid);
+                const peerAddr = bytes32ToAddress(peerBytes32);
+
+                if (peerAddr) {
+                    resultEl.textContent = `Peer for ${LZ_CHAINS[destEid]?.name || 'EID ' + destEid}:\n${peerAddr}`;
+                    resultEl.className = 'result success';
+                } else {
+                    resultEl.textContent = `No peer set for ${LZ_CHAINS[destEid]?.name || 'EID ' + destEid}`;
+                    resultEl.className = 'result';
+                }
+            } catch (error) {
+                resultEl.textContent = `Error: ${error.reason || error.message}`;
+                resultEl.className = 'result error';
+            } finally {
+                setButtonLoading(btn, false);
+            }
+        }
+
+        async function refreshPeerStatus(btn) {
+            const statusEl = document.getElementById('peerStatusList');
+
+            if (!routerV5) {
+                const routerAddr = document.getElementById('routerV5Address').value.trim();
+                if (routerAddr && ethers.isAddress(routerAddr)) {
+                    await connectToRouterV5(routerAddr);
+                }
+            }
+
+            if (!routerV5) {
+                statusEl.innerHTML = '<p style="color: #ef4444;">Router V5 not connected</p>';
+                return;
+            }
+
+            if (btn) setButtonLoading(btn, true);
+            statusEl.innerHTML = '<p style="color: #666;">Loading peers...</p>';
+
+            try {
+                const network = await provider.getNetwork();
+                const currentChainId = Number(network.chainId);
+
+                let html = '<div style="display: flex; flex-direction: column; gap: 8px;">';
+
+                for (const [eid, chainInfo] of Object.entries(LZ_CHAINS)) {
+                    // Skip current chain
+                    if (chainInfo.chainId === currentChainId) continue;
+
+                    try {
+                        const peerBytes32 = await routerV5.peers(eid);
+                        const peerAddr = bytes32ToAddress(peerBytes32);
+
+                        if (peerAddr) {
+                            html += `
+                                <div style="padding: 8px; background: #dcfce7; border-radius: 4px;">
+                                    <strong>${chainInfo.name}</strong> (EID ${eid})<br>
+                                    <span style="font-size: 0.85em; color: #16a34a;">✓ ${peerAddr}</span>
+                                </div>
+                            `;
+                        } else {
+                            html += `
+                                <div style="padding: 8px; background: #fef3c7; border-radius: 4px;">
+                                    <strong>${chainInfo.name}</strong> (EID ${eid})<br>
+                                    <span style="font-size: 0.85em; color: #d97706;">✗ Not configured</span>
+                                </div>
+                            `;
+                        }
+                    } catch (e) {
+                        html += `
+                            <div style="padding: 8px; background: #fee2e2; border-radius: 4px;">
+                                <strong>${chainInfo.name}</strong> (EID ${eid})<br>
+                                <span style="font-size: 0.85em; color: #dc2626;">Error checking</span>
+                            </div>
+                        `;
+                    }
+                }
+
+                html += '</div>';
+                statusEl.innerHTML = html;
+            } catch (error) {
+                statusEl.innerHTML = `<p style="color: #ef4444;">Error: ${error.message}</p>`;
+            } finally {
+                if (btn) setButtonLoading(btn, false);
             }
         }
 
