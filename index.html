@@ -610,108 +610,84 @@
         </div>
         <div class="tab-content">
 
-        <!-- ==================== ERC20 TOKENS TAB ==================== -->
+        <!-- ==================== ERC20 TOKENS TAB (Manage Selected Token) ==================== -->
         <div id="erc20-tab" class="tab-panel">
             <div class="section-header">
-                <h2>ERC20 Token Management</h2>
-                <p class="description">Deploy, upgrade, and manage tokens</p>
+                <h2>Token Management</h2>
+                <p class="description">Select a token to view details and perform operations</p>
             </div>
 
-            <!-- Factory Connection Status for Tokens Tab (hidden by default, shown if connection fails) -->
-            <div id="tokensFactoryNotice" class="info-box warning" style="margin-bottom: 12px; display: none;">
-                <strong>Factory not connected.</strong> Connect wallet first or check if you're on Amoy network.
+            <!-- Token Selector -->
+            <div class="connection-panel" style="margin-bottom: 20px;">
+                <h3>Select Token</h3>
+                <div class="connection-row">
+                    <div class="field" style="flex: 2;">
+                        <label>Token Address</label>
+                        <input type="text" id="selectedTokenAddr" placeholder="0x... or select from Factory tab" />
+                    </div>
+                    <div class="connection-actions">
+                        <button class="btn-connect" onclick="loadSelectedToken()">Load Token</button>
+                        <span id="tokenConnectionStatus" class="status-pill disconnected"><span class="dot"></span>No Token</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Selected Token Info Panel -->
+            <div id="selectedTokenPanel" class="card" style="margin-bottom: 20px; display: none;">
+                <h2 id="selectedTokenTitle">Token Info</h2>
+                <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                    <div class="info-row"><span class="info-label">Name</span><span class="info-value" id="selectedTokenName">-</span></div>
+                    <div class="info-row"><span class="info-label">Symbol</span><span class="info-value" id="selectedTokenSymbol">-</span></div>
+                    <div class="info-row"><span class="info-label">Decimals</span><span class="info-value" id="selectedTokenDecimals">-</span></div>
+                    <div class="info-row"><span class="info-label">Total Supply</span><span class="info-value" id="selectedTokenSupply">-</span></div>
+                    <div class="info-row"><span class="info-label">Owner</span><span class="info-value address" id="selectedTokenOwner">-</span></div>
+                    <div class="info-row"><span class="info-label">Your Balance</span><span class="info-value" id="selectedTokenBalance">-</span></div>
+                    <div class="info-row"><span class="info-label">Bridge Status</span><span class="info-value" id="selectedTokenBridgeStatus">-</span></div>
+                    <div class="info-row"><span class="info-label">Your Role</span><span class="info-value" id="selectedTokenYourRole">-</span></div>
+                </div>
             </div>
 
         <div class="grid">
-            <!-- Deploy ERC20 Token -->
-            <div class="card" id="deployTokenCard">
-                <h2>Deploy New ERC20 Token <span class="badge badge-role">DEPLOYER</span></h2>
-                <div id="deployerLimitInfo" style="background: #f3f4f6; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 0.85em;">
-                    <span style="color: #666;">Your deployment limit:</span>
-                    <span id="yourLimit" style="color: #d97706;">-</span> |
-                    <span style="color: #666;">Deployed:</span>
-                    <span id="yourDeployed" style="color: #16a34a;">-</span>
-                </div>
-                <div class="form-group">
-                    <label>Token Name</label>
-                    <input type="text" id="tokenName" placeholder="e.g., ARYZE Euro" />
-                </div>
-                <div class="form-group">
-                    <label>Token Symbol</label>
-                    <input type="text" id="tokenSymbol" placeholder="e.g., eEUR" />
-                </div>
-                <div class="form-group">
-                    <label>Decimals</label>
-                    <input type="number" id="tokenDecimals" value="6" min="0" max="18" />
-                </div>
-                <div class="success-box">
-                    You (the deployer) will automatically become the token admin with all roles.
-                </div>
-                <div class="form-group">
-                    <label>Slug (unique number for CREATE2)</label>
-                    <input type="number" id="tokenSlug" value="1" min="0" />
-                    <div class="help-text">Use same slug across chains for deterministic addresses</div>
-                    <div class="warning-box" style="margin-top: 8px;">
-                        <strong>CREATE2 Security:</strong> Deploy Factory on ALL target chains FIRST before deploying any tokens.
-                    </div>
-                </div>
-                <button class="btn btn-success" onclick="deployToken()" id="deployTokenBtn">Deploy Token</button>
-                <button class="btn btn-secondary" onclick="computeAddress()">Compute Address</button>
-                <div id="deployResult" class="result hidden"></div>
-                <div style="display: flex; gap: 10px; margin-top: 10px;">
-                    <button class="btn btn-primary hidden" id="verifyDeployedBtn" onclick="verifyDeployedToken()" style="flex: 1;">Verify on Explorer</button>
-                    <button class="btn btn-success hidden" id="configureDeployedBtn" onclick="configureLastDeployedToken()" style="flex: 1;">Configure for Bridge</button>
-                </div>
-                <div id="verifyResult" class="result hidden"></div>
-            </div>
-
-            <!-- My Tokens List -->
-            <div class="card">
-                <h2>My Tokens</h2>
-                <div class="help-text" style="margin-bottom: 12px;">Tokens where you are the owner</div>
-                <div id="myTokenList" class="token-list">
-                    <p style="color: #666; text-align: center;">Connect wallet to load your tokens</p>
-                </div>
-            </div>
-
-            <!-- All Deployed Tokens List -->
-            <div class="card">
-                <h2>All Deployed Tokens</h2>
-                <div class="help-text" style="margin-bottom: 12px;">All tokens deployed through this factory</div>
-                <div id="allTokenList" class="token-list">
-                    <p style="color: #666; text-align: center;">Connect to load tokens</p>
-                </div>
-                <button class="btn btn-secondary" onclick="loadTokens()">Refresh Lists</button>
-            </div>
-
             <!-- Configure Token for Bridge (One-Click) -->
             <div class="card" id="configureForBridgeCard">
-                <h2>Configure Token for Bridge <span class="badge badge-role">ONE-CLICK</span></h2>
+                <h2>Configure for Bridge <span class="badge badge-role">ONE-CLICK</span></h2>
                 <div class="info-box warning">
-                    After deploying a token, you must:<br>
-                    1. Grant ROUTER_ROLE on the token to the router<br>
-                    2. Add token to router's bridgeable whitelist<br><br>
-                    <strong>This button does both steps automatically.</strong>
+                    Grants ROUTER_ROLE on the token to the router AND adds token to router's bridgeable whitelist.
+                </div>
+                <button class="btn btn-success" onclick="configureSelectedTokenForBridge(this)">Configure for Bridge</button>
+                <div id="configureResult" class="result hidden"></div>
+            </div>
+
+            <!-- Mint Tokens -->
+            <div class="card">
+                <h2>Mint Tokens <span class="badge badge-role">MINTER</span></h2>
+                <div class="form-group">
+                    <label>Recipient Address</label>
+                    <input type="text" id="mintToAddr" placeholder="0x..." />
                 </div>
                 <div class="form-group">
-                    <label>Token Address</label>
-                    <input type="text" id="configureTokenAddr" placeholder="0x..." />
+                    <label>Amount</label>
+                    <input type="text" id="mintAmount" placeholder="e.g., 1000" />
                 </div>
-                <button class="btn btn-success" onclick="configureTokenForBridge(this)">Configure for Bridge</button>
-                <div id="configureResult" class="result hidden"></div>
+                <button class="btn btn-success" onclick="mintTokens(this)">Mint</button>
+                <div id="mintResult" class="result hidden"></div>
+            </div>
+
+            <!-- Burn Tokens -->
+            <div class="card">
+                <h2>Burn Tokens <span class="badge badge-role">BURNER</span></h2>
+                <div class="form-group">
+                    <label>Amount to Burn</label>
+                    <input type="text" id="burnAmount" placeholder="e.g., 1000" />
+                </div>
+                <button class="btn btn-danger" onclick="burnTokens(this)">Burn</button>
+                <div id="burnResult" class="result hidden"></div>
             </div>
 
             <!-- Check Token Bridge Status -->
             <div class="card">
-                <h2>Check Token Bridge Status</h2>
-                <div class="help-text" style="margin-bottom: 12px;">
-                    Check if a token has ROUTER_ROLE granted and is in the bridgeable whitelist.
-                </div>
-                <div class="form-group">
-                    <label>Token Address</label>
-                    <input type="text" id="checkStatusTokenAddr" placeholder="0x..." />
-                </div>
-                <button class="btn btn-secondary" onclick="checkTokenBridgeStatus(this)">Check Status</button>
+                <h2>Check Bridge Status</h2>
+                <button class="btn btn-secondary" onclick="checkSelectedTokenBridgeStatus(this)">Refresh Status</button>
                 <div id="checkStatusResult" class="result hidden"></div>
             </div>
 
@@ -719,44 +695,32 @@
             <div class="card">
                 <h2>Remove from Whitelist <span class="badge badge-role">ROUTER ADMIN</span></h2>
                 <div class="help-text" style="margin-bottom: 12px;">
-                    Removes a token from the bridgeable whitelist. The token will no longer be bridgeable.
+                    Removes this token from the bridgeable whitelist.
                 </div>
-                <div class="form-group">
-                    <label>Token Address</label>
-                    <input type="text" id="removeWhitelistTokenAddr" placeholder="0x..." />
-                </div>
-                <button class="btn btn-danger" onclick="removeFromBridgeable(this)">Remove from Whitelist</button>
+                <button class="btn btn-danger" onclick="removeSelectedFromBridgeable(this)">Remove from Whitelist</button>
                 <div id="removeWhitelistResult" class="result hidden"></div>
             </div>
 
             <!-- Token Upgrade (Owner Only) -->
             <div class="card">
                 <h2>Upgrade Token <span class="badge badge-role">TOKEN OWNER</span></h2>
-                <div class="help-text" style="margin-bottom: 15px;">Only the token owner (set at deployment) can upgrade their token to a new version.</div>
-                <div class="form-group">
-                    <label>Token Address</label>
-                    <input type="text" id="upgradeTokenAddr" placeholder="0x..." />
-                </div>
+                <div class="help-text" style="margin-bottom: 15px;">Upgrade to a new implementation version.</div>
                 <div class="form-group">
                     <label>New Version</label>
                     <input type="number" id="upgradeVersion" value="2" min="1" />
                 </div>
-                <button class="btn btn-warning" onclick="upgradeToken(this)">Upgrade Token</button>
+                <button class="btn btn-warning" onclick="upgradeSelectedToken(this)">Upgrade Token</button>
                 <div id="upgradeResult" class="result hidden"></div>
             </div>
 
             <!-- Transfer Token Ownership -->
             <div class="card">
-                <h2>Transfer Token Ownership <span class="badge badge-role">TOKEN OWNER</span></h2>
-                <div class="form-group">
-                    <label>Token Address</label>
-                    <input type="text" id="transferTokenAddr" placeholder="0x..." />
-                </div>
+                <h2>Transfer Ownership <span class="badge badge-role">TOKEN OWNER</span></h2>
                 <div class="form-group">
                     <label>New Owner Address</label>
                     <input type="text" id="newOwnerAddr" placeholder="0x..." />
                 </div>
-                <button class="btn btn-warning" onclick="transferOwnership(this)">Transfer Ownership</button>
+                <button class="btn btn-warning" onclick="transferSelectedOwnership(this)">Transfer Ownership</button>
                 <div id="transferResult" class="result hidden"></div>
             </div>
         </div>
@@ -886,6 +850,69 @@
                 <div class="status-icon" id="beaconStatusIcon">&#9888;</div>
             </div>
 
+        <!-- ==================== DEPLOY & TOKEN LISTS SECTION ==================== -->
+        <h2 style="color: #22c55e; margin: 20px 0 20px; padding-bottom: 10px; border-bottom: 2px solid #e5e7eb;">Deploy Tokens</h2>
+        <div class="grid">
+            <!-- Deploy ERC20 Token -->
+            <div class="card" id="deployTokenCard">
+                <h2>Deploy New ERC20 Token <span class="badge badge-role">DEPLOYER</span></h2>
+                <div id="deployerLimitInfo" style="background: #f3f4f6; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 0.85em;">
+                    <span style="color: #666;">Your deployment limit:</span>
+                    <span id="yourLimit" style="color: #d97706;">-</span> |
+                    <span style="color: #666;">Deployed:</span>
+                    <span id="yourDeployed" style="color: #16a34a;">-</span>
+                </div>
+                <div class="form-group">
+                    <label>Token Name</label>
+                    <input type="text" id="tokenName" placeholder="e.g., ARYZE Euro" />
+                </div>
+                <div class="form-group">
+                    <label>Token Symbol</label>
+                    <input type="text" id="tokenSymbol" placeholder="e.g., eEUR" />
+                </div>
+                <div class="form-group">
+                    <label>Decimals</label>
+                    <input type="number" id="tokenDecimals" value="6" min="0" max="18" />
+                </div>
+                <div class="success-box">
+                    You (the deployer) will automatically become the token admin with all roles.
+                </div>
+                <div class="form-group">
+                    <label>Slug (unique number for CREATE2)</label>
+                    <input type="number" id="tokenSlug" value="1" min="0" />
+                    <div class="help-text">Use same slug across chains for deterministic addresses</div>
+                    <div class="warning-box" style="margin-top: 8px;">
+                        <strong>CREATE2 Security:</strong> Deploy Factory on ALL target chains FIRST before deploying any tokens.
+                    </div>
+                </div>
+                <button class="btn btn-success" onclick="deployToken()" id="deployTokenBtn">Deploy Token</button>
+                <button class="btn btn-secondary" onclick="computeAddress()">Compute Address</button>
+                <div id="deployResult" class="result hidden"></div>
+                <div id="verifyResult" class="result hidden"></div>
+            </div>
+
+            <!-- My Tokens List -->
+            <div class="card">
+                <h2>My Tokens</h2>
+                <div class="help-text" style="margin-bottom: 12px;">Click on a token to manage it</div>
+                <div id="myTokenList" class="token-list">
+                    <p style="color: #666; text-align: center;">Connect wallet to load your tokens</p>
+                </div>
+            </div>
+
+            <!-- All Deployed Tokens List -->
+            <div class="card">
+                <h2>All Deployed Tokens</h2>
+                <div class="help-text" style="margin-bottom: 12px;">All tokens deployed through this factory</div>
+                <div id="allTokenList" class="token-list">
+                    <p style="color: #666; text-align: center;">Connect to load tokens</p>
+                </div>
+                <button class="btn btn-secondary" onclick="loadTokens()">Refresh Lists</button>
+            </div>
+        </div>
+
+        <!-- ==================== FACTORY ADMIN SECTION ==================== -->
+        <h2 style="color: #4f46e5; margin: 40px 0 20px; padding-bottom: 10px; border-bottom: 2px solid #e5e7eb;">Factory Administration</h2>
         <div class="grid">
             <!-- Factory Info -->
             <div class="card">
@@ -1356,9 +1383,16 @@
             "function symbol() view returns (string)",
             "function decimals() view returns (uint8)",
             "function totalSupply() view returns (uint256)",
+            "function balanceOf(address account) view returns (uint256)",
             "function paused() view returns (bool)",
+            // Mint & Burn
+            "function mint(address to, uint256 amount)",
+            "function burn(uint256 amount)",
+            "function burnFrom(address account, uint256 amount)",
             // Role management
             "function ROUTER_ROLE() view returns (bytes32)",
+            "function MINTER_ROLE() view returns (bytes32)",
+            "function BURNER_ROLE() view returns (bytes32)",
             "function DEFAULT_ADMIN_ROLE() view returns (bytes32)",
             "function hasRole(bytes32 role, address account) view returns (bool)",
             "function grantRole(bytes32 role, address account)",
@@ -2151,11 +2185,9 @@
                         // Add to "All Tokens" list
                         const allItem = document.createElement('div');
                         allItem.className = 'token-item';
+                        allItem.style.cursor = 'pointer';
                         allItem.innerHTML = itemHtml;
-                        allItem.onclick = () => {
-                            document.getElementById('upgradeTokenAddr').value = addr;
-                            document.getElementById('transferTokenAddr').value = addr;
-                        };
+                        allItem.onclick = () => selectToken(addr);
                         allListEl.appendChild(allItem);
 
                         // Add to "My Tokens" list if owner matches connected wallet
@@ -2163,11 +2195,9 @@
                             myTokenCount++;
                             const myItem = document.createElement('div');
                             myItem.className = 'token-item';
+                            myItem.style.cursor = 'pointer';
                             myItem.innerHTML = itemHtml;
-                            myItem.onclick = () => {
-                                document.getElementById('upgradeTokenAddr').value = addr;
-                                document.getElementById('transferTokenAddr').value = addr;
-                            };
+                            myItem.onclick = () => selectToken(addr);
                             myListEl.appendChild(myItem);
                         }
                     } catch (tokenError) {
@@ -3266,10 +3296,10 @@
                 return;
             }
 
-            // Set the token address in the configure input
-            document.getElementById('configureTokenAddr').value = lastDeployedToken.tokenAddress;
+            // Select the token (switches to Tokens tab and loads it)
+            await selectToken(lastDeployedToken.tokenAddress);
 
-            // Scroll to the Configure Token for Bridge card (in Tokens tab)
+            // Scroll to and highlight the Configure for Bridge card
             setTimeout(() => {
                 const configureCard = document.getElementById('configureForBridgeCard');
                 if (configureCard) {
@@ -3287,10 +3317,332 @@
                         if (btn) btn.click();
                     }, 500);
                 }
-            }, 100);
+            }, 300);
         }
 
         // ==================== END ROUTER V5 FUNCTIONS ====================
+
+        // ==================== TOKEN MANAGEMENT FUNCTIONS ====================
+
+        // Currently selected token
+        let selectedToken = null;
+        let selectedTokenContract = null;
+
+        // Select a token and switch to Tokens tab
+        async function selectToken(addr) {
+            document.getElementById('selectedTokenAddr').value = addr;
+            switchTab('erc20');
+            await loadSelectedToken();
+        }
+
+        // Load the selected token data
+        async function loadSelectedToken() {
+            const addr = document.getElementById('selectedTokenAddr').value.trim();
+            const statusEl = document.getElementById('tokenConnectionStatus');
+            const panelEl = document.getElementById('selectedTokenPanel');
+
+            if (!addr || !ethers.isAddress(addr)) {
+                statusEl.innerHTML = '<span class="dot"></span>Invalid Address';
+                statusEl.className = 'status-pill disconnected';
+                panelEl.style.display = 'none';
+                selectedToken = null;
+                selectedTokenContract = null;
+                return;
+            }
+
+            try {
+                statusEl.innerHTML = '<span class="dot"></span>Loading...';
+                statusEl.className = 'status-pill';
+
+                selectedTokenContract = new ethers.Contract(addr, TOKEN_ABI, signer || provider);
+
+                const [name, symbol, decimals, totalSupply] = await Promise.all([
+                    selectedTokenContract.name(),
+                    selectedTokenContract.symbol(),
+                    selectedTokenContract.decimals(),
+                    selectedTokenContract.totalSupply()
+                ]);
+
+                // Get owner from factory
+                let owner = '-';
+                try {
+                    owner = await factory.tokenOwner(addr);
+                } catch(e) {}
+
+                // Get user balance if connected
+                let balance = '-';
+                if (signerAddress) {
+                    try {
+                        const bal = await selectedTokenContract.balanceOf(signerAddress);
+                        balance = ethers.formatUnits(bal, decimals);
+                    } catch(e) {}
+                }
+
+                // Check bridge status
+                let bridgeStatus = 'Unknown';
+                if (routerV5) {
+                    try {
+                        const isBridgeable = await routerV5.isBridgeable(addr);
+                        const ROUTER_ROLE = ethers.keccak256(ethers.toUtf8Bytes('ROUTER_ROLE'));
+                        const hasRouterRole = await selectedTokenContract.hasRole(ROUTER_ROLE, await routerV5.getAddress());
+                        if (isBridgeable && hasRouterRole) {
+                            bridgeStatus = '<span style="color: #22c55e;">✓ Ready for Bridge</span>';
+                        } else if (isBridgeable) {
+                            bridgeStatus = '<span style="color: #d97706;">⚠ Missing ROUTER_ROLE</span>';
+                        } else if (hasRouterRole) {
+                            bridgeStatus = '<span style="color: #d97706;">⚠ Not in whitelist</span>';
+                        } else {
+                            bridgeStatus = '<span style="color: #ef4444;">✗ Not configured</span>';
+                        }
+                    } catch(e) {}
+                }
+
+                // Check user's role on token
+                let yourRole = 'None';
+                if (signerAddress) {
+                    try {
+                        const roles = [];
+                        const ADMIN_ROLE = '0x0000000000000000000000000000000000000000000000000000000000000000';
+                        const MINTER_ROLE = ethers.keccak256(ethers.toUtf8Bytes('MINTER_ROLE'));
+                        const BURNER_ROLE = ethers.keccak256(ethers.toUtf8Bytes('BURNER_ROLE'));
+
+                        if (await selectedTokenContract.hasRole(ADMIN_ROLE, signerAddress)) roles.push('ADMIN');
+                        if (await selectedTokenContract.hasRole(MINTER_ROLE, signerAddress)) roles.push('MINTER');
+                        if (await selectedTokenContract.hasRole(BURNER_ROLE, signerAddress)) roles.push('BURNER');
+
+                        if (owner.toLowerCase() === signerAddress.toLowerCase()) roles.push('OWNER');
+
+                        yourRole = roles.length > 0 ? roles.join(', ') : 'None';
+                    } catch(e) {}
+                }
+
+                // Update UI
+                document.getElementById('selectedTokenTitle').textContent = `${name} (${symbol})`;
+                document.getElementById('selectedTokenName').textContent = name;
+                document.getElementById('selectedTokenSymbol').textContent = symbol;
+                document.getElementById('selectedTokenDecimals').textContent = decimals;
+                document.getElementById('selectedTokenSupply').textContent = ethers.formatUnits(totalSupply, decimals);
+                document.getElementById('selectedTokenOwner').textContent = owner;
+                document.getElementById('selectedTokenBalance').textContent = balance;
+                document.getElementById('selectedTokenBridgeStatus').innerHTML = bridgeStatus;
+                document.getElementById('selectedTokenYourRole').textContent = yourRole;
+
+                selectedToken = { addr, name, symbol, decimals, owner };
+                panelEl.style.display = 'block';
+                statusEl.innerHTML = '<span class="dot"></span>' + symbol;
+                statusEl.className = 'status-pill connected';
+
+            } catch (error) {
+                statusEl.innerHTML = '<span class="dot"></span>Error';
+                statusEl.className = 'status-pill disconnected';
+                panelEl.style.display = 'none';
+                selectedToken = null;
+                selectedTokenContract = null;
+                console.error('Error loading token:', error);
+            }
+        }
+
+        // Mint tokens
+        async function mintTokens(btn) {
+            if (!selectedTokenContract || !signer) return alert('Please select a token and connect wallet first');
+
+            const toAddr = document.getElementById('mintToAddr').value.trim();
+            const amount = document.getElementById('mintAmount').value.trim();
+            const resultEl = document.getElementById('mintResult');
+            resultEl.classList.remove('hidden');
+
+            if (!toAddr || !ethers.isAddress(toAddr)) {
+                resultEl.textContent = 'Invalid recipient address';
+                resultEl.className = 'result error';
+                return;
+            }
+
+            if (!amount || isNaN(parseFloat(amount))) {
+                resultEl.textContent = 'Invalid amount';
+                resultEl.className = 'result error';
+                return;
+            }
+
+            setButtonLoading(btn, true);
+            try {
+                const decimals = selectedToken.decimals;
+                const amountWei = ethers.parseUnits(amount, decimals);
+                const tx = await selectedTokenContract.mint(toAddr, amountWei);
+                resultEl.textContent = `Transaction sent: ${tx.hash}\nWaiting...`;
+                await tx.wait();
+                resultEl.textContent = `✓ Minted ${amount} ${selectedToken.symbol} to ${toAddr.slice(0,6)}...${toAddr.slice(-4)}`;
+                resultEl.className = 'result success';
+                await loadSelectedToken();
+            } catch (error) {
+                resultEl.textContent = `Error: ${error.reason || error.message}`;
+                resultEl.className = 'result error';
+            } finally {
+                setButtonLoading(btn, false);
+            }
+        }
+
+        // Burn tokens
+        async function burnTokens(btn) {
+            if (!selectedTokenContract || !signer) return alert('Please select a token and connect wallet first');
+
+            const amount = document.getElementById('burnAmount').value.trim();
+            const resultEl = document.getElementById('burnResult');
+            resultEl.classList.remove('hidden');
+
+            if (!amount || isNaN(parseFloat(amount))) {
+                resultEl.textContent = 'Invalid amount';
+                resultEl.className = 'result error';
+                return;
+            }
+
+            setButtonLoading(btn, true);
+            try {
+                const decimals = selectedToken.decimals;
+                const amountWei = ethers.parseUnits(amount, decimals);
+                const tx = await selectedTokenContract.burn(amountWei);
+                resultEl.textContent = `Transaction sent: ${tx.hash}\nWaiting...`;
+                await tx.wait();
+                resultEl.textContent = `✓ Burned ${amount} ${selectedToken.symbol}`;
+                resultEl.className = 'result success';
+                await loadSelectedToken();
+            } catch (error) {
+                resultEl.textContent = `Error: ${error.reason || error.message}`;
+                resultEl.className = 'result error';
+            } finally {
+                setButtonLoading(btn, false);
+            }
+        }
+
+        // Configure selected token for bridge
+        async function configureSelectedTokenForBridge(btn) {
+            if (!selectedToken) return alert('Please select a token first');
+            document.getElementById('configureTokenAddr').value = selectedToken.addr;
+            await configureTokenForBridge(btn);
+            await loadSelectedToken();
+        }
+
+        // Check selected token bridge status
+        async function checkSelectedTokenBridgeStatus(btn) {
+            if (!selectedToken) return alert('Please select a token first');
+            const resultEl = document.getElementById('checkStatusResult');
+            resultEl.classList.remove('hidden');
+
+            if (!routerV5) {
+                resultEl.textContent = 'Router not connected';
+                resultEl.className = 'result error';
+                return;
+            }
+
+            setButtonLoading(btn, true);
+            try {
+                const tokenAddr = selectedToken.addr;
+                const isBridgeable = await routerV5.isBridgeable(tokenAddr);
+                const ROUTER_ROLE = ethers.keccak256(ethers.toUtf8Bytes('ROUTER_ROLE'));
+                const routerAddr = await routerV5.getAddress();
+                const hasRouterRole = await selectedTokenContract.hasRole(ROUTER_ROLE, routerAddr);
+
+                let status = `Token: ${selectedToken.symbol}\n\n`;
+                status += `Bridgeable Whitelist: ${isBridgeable ? '✓ Yes' : '✗ No'}\n`;
+                status += `ROUTER_ROLE granted: ${hasRouterRole ? '✓ Yes' : '✗ No'}\n\n`;
+
+                if (isBridgeable && hasRouterRole) {
+                    status += '✓ Token is fully configured for bridging!';
+                    resultEl.className = 'result success';
+                } else {
+                    status += '⚠ Token needs configuration before bridging';
+                    resultEl.className = 'result';
+                }
+                resultEl.textContent = status;
+                await loadSelectedToken();
+            } catch (error) {
+                resultEl.textContent = `Error: ${error.reason || error.message}`;
+                resultEl.className = 'result error';
+            } finally {
+                setButtonLoading(btn, false);
+            }
+        }
+
+        // Remove selected token from whitelist
+        async function removeSelectedFromBridgeable(btn) {
+            if (!selectedToken) return alert('Please select a token first');
+            if (!routerV5 || !signer) return alert('Please connect wallet and router first');
+
+            const resultEl = document.getElementById('removeWhitelistResult');
+            resultEl.classList.remove('hidden');
+            setButtonLoading(btn, true);
+
+            try {
+                const tx = await routerV5.removeBridgeable(selectedToken.addr);
+                resultEl.textContent = `Transaction sent: ${tx.hash}\nWaiting...`;
+                await tx.wait();
+                resultEl.textContent = `✓ ${selectedToken.symbol} removed from bridgeable whitelist`;
+                resultEl.className = 'result success';
+                await loadSelectedToken();
+            } catch (error) {
+                resultEl.textContent = `Error: ${error.reason || error.message}`;
+                resultEl.className = 'result error';
+            } finally {
+                setButtonLoading(btn, false);
+            }
+        }
+
+        // Upgrade selected token
+        async function upgradeSelectedToken(btn) {
+            if (!selectedToken) return alert('Please select a token first');
+            if (!factory || !signer) return alert('Please connect wallet first');
+
+            const newVersion = parseInt(document.getElementById('upgradeVersion').value);
+            const resultEl = document.getElementById('upgradeResult');
+            resultEl.classList.remove('hidden');
+            setButtonLoading(btn, true);
+
+            try {
+                const tx = await factory.upgradeToken(selectedToken.addr, newVersion);
+                resultEl.textContent = `Transaction sent: ${tx.hash}\nWaiting...`;
+                await tx.wait();
+                resultEl.textContent = `✓ ${selectedToken.symbol} upgraded to version ${newVersion}`;
+                resultEl.className = 'result success';
+                await loadSelectedToken();
+            } catch (error) {
+                resultEl.textContent = `Error: ${error.reason || error.message}`;
+                resultEl.className = 'result error';
+            } finally {
+                setButtonLoading(btn, false);
+            }
+        }
+
+        // Transfer selected token ownership
+        async function transferSelectedOwnership(btn) {
+            if (!selectedToken) return alert('Please select a token first');
+            if (!factory || !signer) return alert('Please connect wallet first');
+
+            const newOwner = document.getElementById('newOwnerAddr').value.trim();
+            const resultEl = document.getElementById('transferResult');
+            resultEl.classList.remove('hidden');
+
+            if (!newOwner || !ethers.isAddress(newOwner)) {
+                resultEl.textContent = 'Invalid new owner address';
+                resultEl.className = 'result error';
+                return;
+            }
+
+            setButtonLoading(btn, true);
+            try {
+                const tx = await factory.transferTokenOwnership(selectedToken.addr, newOwner);
+                resultEl.textContent = `Transaction sent: ${tx.hash}\nWaiting...`;
+                await tx.wait();
+                resultEl.textContent = `✓ ${selectedToken.symbol} ownership transferred to ${newOwner.slice(0,6)}...${newOwner.slice(-4)}`;
+                resultEl.className = 'result success';
+                await loadSelectedToken();
+            } catch (error) {
+                resultEl.textContent = `Error: ${error.reason || error.message}`;
+                resultEl.className = 'result error';
+            } finally {
+                setButtonLoading(btn, false);
+            }
+        }
+
+        // ==================== END TOKEN MANAGEMENT FUNCTIONS ====================
 
         async function addImplementation(btn) {
             if (!factory || !signer) return alert('Please connect with a wallet first');
