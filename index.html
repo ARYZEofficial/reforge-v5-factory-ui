@@ -1084,6 +1084,76 @@
                 <button class="btn btn-danger" onclick="removeFromBridgeable(this)">Remove from Whitelist</button>
                 <div id="removeWhitelistResult" class="result hidden"></div>
             </div>
+
+            <!-- Set Fee Treasury -->
+            <div class="card">
+                <h2>Set Fee Treasury <span class="badge badge-role">ADMIN</span></h2>
+                <div class="help-text" style="margin-bottom: 12px;">
+                    Set the address that receives bridge fees.
+                </div>
+                <div class="form-group">
+                    <label>Treasury Address</label>
+                    <input type="text" id="setTreasuryAddr" placeholder="0x..." />
+                </div>
+                <button class="btn btn-warning" onclick="setFeeTreasury(this)">Set Treasury</button>
+                <div id="setTreasuryResult" class="result hidden"></div>
+            </div>
+
+            <!-- Add Signer -->
+            <div class="card">
+                <h2>Add Signer <span class="badge badge-role">ADMIN</span></h2>
+                <div class="help-text" style="margin-bottom: 12px;">
+                    Add a signer for furnace operations.
+                </div>
+                <div class="form-group">
+                    <label>Signer Address</label>
+                    <input type="text" id="addSignerAddr" placeholder="0x..." />
+                </div>
+                <button class="btn btn-success" onclick="addSigner(this)">Add Signer</button>
+                <div id="addSignerResult" class="result hidden"></div>
+            </div>
+
+            <!-- Remove Signer -->
+            <div class="card">
+                <h2>Remove Signer <span class="badge badge-role">ADMIN</span></h2>
+                <div class="help-text" style="margin-bottom: 12px;">
+                    Remove a signer from furnace operations.
+                </div>
+                <div class="form-group">
+                    <label>Signer Address</label>
+                    <input type="text" id="removeSignerAddr" placeholder="0x..." />
+                </div>
+                <button class="btn btn-danger" onclick="removeSigner(this)">Remove Signer</button>
+                <div id="removeSignerResult" class="result hidden"></div>
+            </div>
+
+            <!-- Set Required Signatures -->
+            <div class="card">
+                <h2>Set Required Signatures <span class="badge badge-role">ADMIN</span></h2>
+                <div class="help-text" style="margin-bottom: 12px;">
+                    Set the number of signatures required for furnace operations.
+                </div>
+                <div class="form-group">
+                    <label>Required Signatures</label>
+                    <input type="number" id="requiredSigsInput" value="1" min="1" />
+                </div>
+                <button class="btn btn-warning" onclick="setRequiredSignatures(this)">Set Required</button>
+                <div id="requiredSigsResult" class="result hidden"></div>
+            </div>
+
+            <!-- Grant ERC20_FACTORY_ROLE -->
+            <div class="card">
+                <h2>Grant Factory Role <span class="badge badge-role">ADMIN</span></h2>
+                <div class="help-text" style="margin-bottom: 12px;">
+                    Grant ERC20_FACTORY_ROLE to a factory contract, allowing it to add tokens to whitelist.
+                </div>
+                <div class="form-group">
+                    <label>Factory Address</label>
+                    <input type="text" id="grantFactoryRoleAddr" placeholder="0x..." value="0x36C476af2cc41f90cC47902F973288fb925dD54B" />
+                </div>
+                <button class="btn btn-success" onclick="grantFactoryRole(this)">Grant Factory Role</button>
+                <div id="grantFactoryRoleResult" class="result hidden"></div>
+            </div>
         </div>
         </div><!-- End Router Tab -->
         </div><!-- End Tab Content -->
@@ -2470,6 +2540,221 @@
                 resultEl.textContent = `Transaction sent: ${tx.hash}\nWaiting...`;
                 await tx.wait();
                 resultEl.textContent = `✓ Token removed from bridgeable whitelist!\n\nToken: ${tokenAddr}`;
+                resultEl.className = 'result success';
+            } catch (error) {
+                resultEl.textContent = `Error: ${error.reason || error.message}`;
+                resultEl.className = 'result error';
+            } finally {
+                setButtonLoading(btn, false);
+            }
+        }
+
+        async function setFeeTreasury(btn) {
+            if (!signer) return alert('Please connect with a wallet first');
+
+            const treasuryAddr = document.getElementById('setTreasuryAddr').value.trim();
+            const resultEl = document.getElementById('setTreasuryResult');
+            resultEl.classList.remove('hidden');
+
+            if (!treasuryAddr || !ethers.isAddress(treasuryAddr)) {
+                resultEl.textContent = 'Please enter a valid treasury address';
+                resultEl.className = 'result error';
+                return;
+            }
+
+            if (!routerV5) {
+                const routerAddr = document.getElementById('routerV5Address').value.trim();
+                if (routerAddr && ethers.isAddress(routerAddr)) {
+                    await connectToRouterV5(routerAddr);
+                }
+            }
+
+            if (!routerV5) {
+                resultEl.textContent = 'Error: Router V5 not connected';
+                resultEl.className = 'result error';
+                return;
+            }
+
+            setButtonLoading(btn, true);
+
+            try {
+                const tx = await routerV5.setFeeTreasury(treasuryAddr);
+                resultEl.textContent = `Transaction sent: ${tx.hash}\nWaiting...`;
+                await tx.wait();
+                resultEl.textContent = `✓ Fee treasury set to ${treasuryAddr}`;
+                resultEl.className = 'result success';
+                await refreshRouterV5Info();
+            } catch (error) {
+                resultEl.textContent = `Error: ${error.reason || error.message}`;
+                resultEl.className = 'result error';
+            } finally {
+                setButtonLoading(btn, false);
+            }
+        }
+
+        async function addSigner(btn) {
+            if (!signer) return alert('Please connect with a wallet first');
+
+            const signerAddr = document.getElementById('addSignerAddr').value.trim();
+            const resultEl = document.getElementById('addSignerResult');
+            resultEl.classList.remove('hidden');
+
+            if (!signerAddr || !ethers.isAddress(signerAddr)) {
+                resultEl.textContent = 'Please enter a valid signer address';
+                resultEl.className = 'result error';
+                return;
+            }
+
+            if (!routerV5) {
+                const routerAddr = document.getElementById('routerV5Address').value.trim();
+                if (routerAddr && ethers.isAddress(routerAddr)) {
+                    await connectToRouterV5(routerAddr);
+                }
+            }
+
+            if (!routerV5) {
+                resultEl.textContent = 'Error: Router V5 not connected';
+                resultEl.className = 'result error';
+                return;
+            }
+
+            setButtonLoading(btn, true);
+
+            try {
+                const tx = await routerV5.addSigner(signerAddr);
+                resultEl.textContent = `Transaction sent: ${tx.hash}\nWaiting...`;
+                await tx.wait();
+                resultEl.textContent = `✓ Signer added: ${signerAddr}`;
+                resultEl.className = 'result success';
+                await refreshRouterV5Info();
+            } catch (error) {
+                resultEl.textContent = `Error: ${error.reason || error.message}`;
+                resultEl.className = 'result error';
+            } finally {
+                setButtonLoading(btn, false);
+            }
+        }
+
+        async function removeSigner(btn) {
+            if (!signer) return alert('Please connect with a wallet first');
+
+            const signerAddr = document.getElementById('removeSignerAddr').value.trim();
+            const resultEl = document.getElementById('removeSignerResult');
+            resultEl.classList.remove('hidden');
+
+            if (!signerAddr || !ethers.isAddress(signerAddr)) {
+                resultEl.textContent = 'Please enter a valid signer address';
+                resultEl.className = 'result error';
+                return;
+            }
+
+            if (!routerV5) {
+                const routerAddr = document.getElementById('routerV5Address').value.trim();
+                if (routerAddr && ethers.isAddress(routerAddr)) {
+                    await connectToRouterV5(routerAddr);
+                }
+            }
+
+            if (!routerV5) {
+                resultEl.textContent = 'Error: Router V5 not connected';
+                resultEl.className = 'result error';
+                return;
+            }
+
+            setButtonLoading(btn, true);
+
+            try {
+                const tx = await routerV5.removeSigner(signerAddr);
+                resultEl.textContent = `Transaction sent: ${tx.hash}\nWaiting...`;
+                await tx.wait();
+                resultEl.textContent = `✓ Signer removed: ${signerAddr}`;
+                resultEl.className = 'result success';
+                await refreshRouterV5Info();
+            } catch (error) {
+                resultEl.textContent = `Error: ${error.reason || error.message}`;
+                resultEl.className = 'result error';
+            } finally {
+                setButtonLoading(btn, false);
+            }
+        }
+
+        async function setRequiredSignatures(btn) {
+            if (!signer) return alert('Please connect with a wallet first');
+
+            const requiredNum = parseInt(document.getElementById('setRequiredSigsNum').value);
+            const resultEl = document.getElementById('setRequiredSigsResult');
+            resultEl.classList.remove('hidden');
+
+            if (isNaN(requiredNum) || requiredNum < 1) {
+                resultEl.textContent = 'Please enter a valid number (minimum 1)';
+                resultEl.className = 'result error';
+                return;
+            }
+
+            if (!routerV5) {
+                const routerAddr = document.getElementById('routerV5Address').value.trim();
+                if (routerAddr && ethers.isAddress(routerAddr)) {
+                    await connectToRouterV5(routerAddr);
+                }
+            }
+
+            if (!routerV5) {
+                resultEl.textContent = 'Error: Router V5 not connected';
+                resultEl.className = 'result error';
+                return;
+            }
+
+            setButtonLoading(btn, true);
+
+            try {
+                const tx = await routerV5.setRequiredSignatures(requiredNum);
+                resultEl.textContent = `Transaction sent: ${tx.hash}\nWaiting...`;
+                await tx.wait();
+                resultEl.textContent = `✓ Required signatures set to: ${requiredNum}`;
+                resultEl.className = 'result success';
+                await refreshRouterV5Info();
+            } catch (error) {
+                resultEl.textContent = `Error: ${error.reason || error.message}`;
+                resultEl.className = 'result error';
+            } finally {
+                setButtonLoading(btn, false);
+            }
+        }
+
+        async function grantFactoryRole(btn) {
+            if (!signer) return alert('Please connect with a wallet first');
+
+            const factoryAddr = document.getElementById('grantFactoryRoleAddr').value.trim();
+            const resultEl = document.getElementById('grantFactoryRoleResult');
+            resultEl.classList.remove('hidden');
+
+            if (!factoryAddr || !ethers.isAddress(factoryAddr)) {
+                resultEl.textContent = 'Please enter a valid factory address';
+                resultEl.className = 'result error';
+                return;
+            }
+
+            if (!routerV5) {
+                const routerAddr = document.getElementById('routerV5Address').value.trim();
+                if (routerAddr && ethers.isAddress(routerAddr)) {
+                    await connectToRouterV5(routerAddr);
+                }
+            }
+
+            if (!routerV5) {
+                resultEl.textContent = 'Error: Router V5 not connected';
+                resultEl.className = 'result error';
+                return;
+            }
+
+            setButtonLoading(btn, true);
+
+            try {
+                const factoryRole = await routerV5.ERC20_FACTORY_ROLE();
+                const tx = await routerV5.grantRole(factoryRole, factoryAddr);
+                resultEl.textContent = `Transaction sent: ${tx.hash}\nWaiting...`;
+                await tx.wait();
+                resultEl.textContent = `✓ ERC20_FACTORY_ROLE granted to: ${factoryAddr}`;
                 resultEl.className = 'result success';
             } catch (error) {
                 resultEl.textContent = `Error: ${error.reason || error.message}`;
