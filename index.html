@@ -659,13 +659,23 @@
                 <div id="verifyResult" class="result hidden"></div>
             </div>
 
-            <!-- Deployed Tokens List -->
+            <!-- My Tokens List -->
             <div class="card">
-                <h2>Deployed Tokens</h2>
-                <div id="tokenList" class="token-list">
+                <h2>My Tokens</h2>
+                <div class="help-text" style="margin-bottom: 12px;">Tokens where you are the owner</div>
+                <div id="myTokenList" class="token-list">
+                    <p style="color: #666; text-align: center;">Connect wallet to load your tokens</p>
+                </div>
+            </div>
+
+            <!-- All Deployed Tokens List -->
+            <div class="card">
+                <h2>All Deployed Tokens</h2>
+                <div class="help-text" style="margin-bottom: 12px;">All tokens deployed through this factory</div>
+                <div id="allTokenList" class="token-list">
                     <p style="color: #666; text-align: center;">Connect to load tokens</p>
                 </div>
-                <button class="btn btn-secondary" onclick="loadTokens()">Refresh List</button>
+                <button class="btn btn-secondary" onclick="loadTokens()">Refresh Lists</button>
             </div>
 
             <!-- Token Upgrade (Owner Only) -->
@@ -1960,23 +1970,27 @@
 
         async function loadTokens() {
             if (!factory) return;
-            const listEl = document.getElementById('tokenList');
+            const myListEl = document.getElementById('myTokenList');
+            const allListEl = document.getElementById('allTokenList');
 
             try {
                 const isInit = await factory.isBeaconInitialized();
                 if (!isInit) {
-                    listEl.innerHTML = '<p style="color: #666; text-align: center;">Beacon not initialized yet</p>';
+                    myListEl.innerHTML = '<p style="color: #666; text-align: center;">Beacon not initialized yet</p>';
+                    allListEl.innerHTML = '<p style="color: #666; text-align: center;">Beacon not initialized yet</p>';
                     return;
                 }
 
                 const count = await factory.getDeployedTokensCount();
                 if (count === 0n) {
-                    listEl.innerHTML = '<p style="color: #666; text-align: center;">No tokens deployed yet</p>';
+                    myListEl.innerHTML = '<p style="color: #666; text-align: center;">No tokens deployed yet</p>';
+                    allListEl.innerHTML = '<p style="color: #666; text-align: center;">No tokens deployed yet</p>';
                     return;
                 }
 
                 const tokens = await factory.getDeployedTokens(0, count);
-                listEl.innerHTML = '<p style="color: #666; text-align: center;">Loading tokens...</p>';
+                myListEl.innerHTML = '<p style="color: #666; text-align: center;">Loading tokens...</p>';
+                allListEl.innerHTML = '<p style="color: #666; text-align: center;">Loading tokens...</p>';
 
                 // Reverse to show newest first
                 const reversedTokens = [...tokens].reverse();
@@ -1989,7 +2003,10 @@
                 const verificationPromises = reversedTokens.map(addr => isContractVerified(addr, networkName));
                 const verificationStatuses = await Promise.all(verificationPromises);
 
-                listEl.innerHTML = '';
+                myListEl.innerHTML = '';
+                allListEl.innerHTML = '';
+
+                let myTokenCount = 0;
 
                 for (let i = 0; i < reversedTokens.length; i++) {
                     const addr = reversedTokens[i];
@@ -2009,26 +2026,41 @@
                         const escapedName = name.replace(/'/g, "\\'");
                         const escapedSymbol = symbol.replace(/'/g, "\\'");
 
-                        const item = document.createElement('div');
-                        item.className = 'token-item';
-
                         // Show "Verified" badge or "Verify" button based on status
                         const verifySection = isVerified === true
                             ? `<span style="margin-top: 8px; display: inline-block; padding: 6px 12px; font-size: 0.85em; background: #dcfce7; color: #16a34a; border-radius: 6px;">✓ Verified</span>`
                             : `<button class="btn btn-primary" style="margin-top: 8px; padding: 6px 12px; font-size: 0.85em;" onclick="event.stopPropagation(); verifyToken('${addr}', '${beaconAddress}', '${escapedName}', '${escapedSymbol}', ${decimals}, '${networkName}')">Verify on Explorer</button>`;
 
-                        item.innerHTML = `
+                        const itemHtml = `
                             <div><span class="token-symbol">${symbol}</span><span class="badge badge-version">v${version}</span></div>
                             <div>${name}</div>
                             <div class="token-address">${addr}</div>
                             <div class="token-owner">Owner: ${owner.slice(0,6)}...${owner.slice(-4)}</div>
                             ${verifySection}
                         `;
-                        item.onclick = () => {
+
+                        // Add to "All Tokens" list
+                        const allItem = document.createElement('div');
+                        allItem.className = 'token-item';
+                        allItem.innerHTML = itemHtml;
+                        allItem.onclick = () => {
                             document.getElementById('upgradeTokenAddr').value = addr;
                             document.getElementById('transferTokenAddr').value = addr;
                         };
-                        listEl.appendChild(item);
+                        allListEl.appendChild(allItem);
+
+                        // Add to "My Tokens" list if owner matches connected wallet
+                        if (signerAddress && owner.toLowerCase() === signerAddress.toLowerCase()) {
+                            myTokenCount++;
+                            const myItem = document.createElement('div');
+                            myItem.className = 'token-item';
+                            myItem.innerHTML = itemHtml;
+                            myItem.onclick = () => {
+                                document.getElementById('upgradeTokenAddr').value = addr;
+                                document.getElementById('transferTokenAddr').value = addr;
+                            };
+                            myListEl.appendChild(myItem);
+                        }
                     } catch (tokenError) {
                         console.error(`Error loading token ${addr}:`, tokenError);
                         const item = document.createElement('div');
@@ -2037,11 +2069,17 @@
                             <div class="token-address">${addr}</div>
                             <div style="color: #ef4444; font-size: 0.85em;">Error loading token data</div>
                         `;
-                        listEl.appendChild(item);
+                        allListEl.appendChild(item);
                     }
                 }
+
+                // Show message if no tokens owned by user
+                if (myTokenCount === 0) {
+                    myListEl.innerHTML = '<p style="color: #666; text-align: center;">You don\'t own any tokens yet</p>';
+                }
             } catch (error) {
-                listEl.innerHTML = `<p style="color: #ef4444;">${error.message}</p>`;
+                myListEl.innerHTML = `<p style="color: #ef4444;">${error.message}</p>`;
+                allListEl.innerHTML = `<p style="color: #ef4444;">${error.message}</p>`;
             }
         }
 
