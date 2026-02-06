@@ -600,6 +600,7 @@
         <div class="tab-nav">
             <button class="tab-btn factory-tab active" onclick="switchTab('factory')">Factory</button>
             <button class="tab-btn router-tab" onclick="switchTab('router')">Router</button>
+            <button class="tab-btn layerzero-tab" onclick="switchTab('layerzero')">LayerZero</button>
             <button class="tab-btn erc20-tab" onclick="switchTab('erc20')">Tokens</button>
         </div>
         <div class="tab-content">
@@ -1164,13 +1165,63 @@
                 <button class="btn btn-success" onclick="grantFactoryRole(this)">Grant Factory Role</button>
                 <div id="grantFactoryRoleResult" class="result hidden"></div>
             </div>
+        </div>
+        </div><!-- End Router Tab -->
 
-            <!-- Set Peer (LayerZero Cross-Chain) -->
+        <!-- ==================== LAYERZERO TAB ==================== -->
+        <div id="layerzero-tab" class="tab-panel">
+            <div class="section-header">
+                <h2>LayerZero Cross-Chain Configuration</h2>
+                <p class="description">Configure peers and cross-chain messaging for the Router</p>
+            </div>
+
+            <!-- LayerZero Info -->
+            <div class="info-box" style="margin-bottom: 20px; background: #eff6ff; border: 1px solid #bfdbfe; padding: 16px; border-radius: 8px;">
+                <h3 style="margin: 0 0 8px 0; color: #1e40af;">How LayerZero Peering Works</h3>
+                <p style="margin: 0; color: #1e3a8a; font-size: 0.9em; line-height: 1.5;">
+                    LayerZero enables cross-chain communication by connecting routers on different chains.
+                    <br><br>
+                    <strong>Setup Requirements:</strong><br>
+                    1. Deploy Router on Chain A (e.g., Amoy)<br>
+                    2. Deploy Router on Chain B (e.g., BSC Testnet)<br>
+                    3. On Chain A: Set Chain B's router as peer<br>
+                    4. On Chain B: Set Chain A's router as peer<br>
+                    <br>
+                    <strong>Important:</strong> Peers must be set on BOTH chains (bidirectional).
+                </p>
+            </div>
+
+        <div class="grid">
+            <!-- Router Connection for LayerZero -->
+            <div class="card">
+                <h2>Router Connection</h2>
+                <div class="help-text" style="margin-bottom: 12px;">
+                    Connect to the Router V5 contract to configure LayerZero peers.
+                </div>
+                <div class="form-group">
+                    <label>Router V5 Address</label>
+                    <input type="text" id="lzRouterAddress" placeholder="0x..." value="0xFFa6B4F011ABF8cda18adA5449f438896e9C6eA3" />
+                </div>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <button class="btn btn-primary" onclick="connectLzRouter()">Connect Router</button>
+                    <span id="lzRouterStatus" style="font-size: 0.85em; color: #666;">Not connected</span>
+                </div>
+            </div>
+
+            <!-- Current Chain Info -->
+            <div class="card">
+                <h2>Current Chain</h2>
+                <div id="currentChainInfo" style="font-family: monospace; font-size: 0.9em;">
+                    <p style="color: #666;">Connect wallet to see chain info</p>
+                </div>
+                <button class="btn btn-secondary" onclick="refreshChainInfo()">Refresh</button>
+            </div>
+
+            <!-- Set Peer -->
             <div class="card">
                 <h2>Set Peer <span class="badge badge-role">ADMIN</span></h2>
                 <div class="help-text" style="margin-bottom: 12px;">
-                    Connect this router to a peer router on another chain for LayerZero cross-chain bridging.
-                    <br><strong>Note:</strong> Must be set on BOTH chains (bidirectional).
+                    Connect this router to a peer router on another chain.
                 </div>
                 <div class="form-group">
                     <label>Destination Chain</label>
@@ -1188,7 +1239,7 @@
                     <label>Peer Router Address</label>
                     <input type="text" id="peerRouterAddr" placeholder="0x..." value="0xFFa6B4F011ABF8cda18adA5449f438896e9C6eA3" />
                     <div class="help-text" style="margin-top: 4px; font-size: 0.8em;">
-                        Default: Same as current router (deterministic CREATE2 deployment)
+                        Default: Same address on all chains (CREATE2 deployment)
                     </div>
                 </div>
                 <div style="display: flex; gap: 8px;">
@@ -1202,15 +1253,50 @@
             <div class="card">
                 <h2>Peer Status</h2>
                 <div class="help-text" style="margin-bottom: 12px;">
-                    View configured peers for this router.
+                    View all configured peers for this router.
                 </div>
                 <div id="peerStatusList" style="font-family: monospace; font-size: 0.85em;">
                     <p style="color: #666;">Click "Refresh Peers" to load</p>
                 </div>
                 <button class="btn btn-secondary" onclick="refreshPeerStatus(this)">Refresh Peers</button>
             </div>
+
+            <!-- LayerZero Endpoint Info -->
+            <div class="card">
+                <h2>LayerZero Endpoint</h2>
+                <div style="font-family: monospace; font-size: 0.85em;">
+                    <div style="margin-bottom: 8px;">
+                        <strong>Endpoint V2 (all chains):</strong><br>
+                        <code style="background: #f3f4f6; padding: 4px 8px; border-radius: 4px; display: inline-block; margin-top: 4px;">0x1a44076050125825900e736c501f859c50fE728c</code>
+                    </div>
+                    <div style="margin-bottom: 8px;">
+                        <strong>Testnet Endpoint:</strong><br>
+                        <code style="background: #f3f4f6; padding: 4px 8px; border-radius: 4px; display: inline-block; margin-top: 4px;">0x6EDCE65403992e310A62460808c4b910D972f10f</code>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chain EIDs Reference -->
+            <div class="card">
+                <h2>Chain EIDs Reference</h2>
+                <div style="font-family: monospace; font-size: 0.85em;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr style="border-bottom: 1px solid #e5e7eb;">
+                            <th style="text-align: left; padding: 6px 0;">Chain</th>
+                            <th style="text-align: right; padding: 6px 0;">EID</th>
+                        </tr>
+                        <tr><td style="padding: 4px 0;">Amoy</td><td style="text-align: right;">40267</td></tr>
+                        <tr><td style="padding: 4px 0;">BSC Testnet</td><td style="text-align: right;">40102</td></tr>
+                        <tr><td style="padding: 4px 0;">Sepolia</td><td style="text-align: right;">40161</td></tr>
+                        <tr><td style="padding: 4px 0;">Arbitrum Sepolia</td><td style="text-align: right;">40231</td></tr>
+                        <tr><td style="padding: 4px 0;">Optimism Sepolia</td><td style="text-align: right;">40232</td></tr>
+                        <tr><td style="padding: 4px 0;">Base Sepolia</td><td style="text-align: right;">40245</td></tr>
+                    </table>
+                </div>
+            </div>
         </div>
-        </div><!-- End Router Tab -->
+        </div><!-- End LayerZero Tab -->
+
         </div><!-- End Tab Content -->
         </div><!-- End Tab Container -->
     </div>
@@ -2874,6 +2960,87 @@
         function updatePeerAddress() {
             // Auto-fill with default router address when chain is selected
             document.getElementById('peerRouterAddr').value = DEFAULT_ROUTER_ADDRESS;
+        }
+
+        // Get current chain's LayerZero EID from chain ID
+        function getEidFromChainId(chainId) {
+            for (const [eid, info] of Object.entries(LZ_CHAINS)) {
+                if (info.chainId === chainId) return eid;
+            }
+            return null;
+        }
+
+        async function connectLzRouter() {
+            if (!provider) {
+                alert('Please connect wallet first');
+                return;
+            }
+
+            const routerAddr = document.getElementById('lzRouterAddress').value.trim();
+            const statusEl = document.getElementById('lzRouterStatus');
+
+            if (!routerAddr || !ethers.isAddress(routerAddr)) {
+                statusEl.textContent = 'Invalid address';
+                statusEl.style.color = '#ef4444';
+                return;
+            }
+
+            try {
+                // Also connect to the main routerV5 variable if not already connected
+                if (!routerV5 || (await routerV5.getAddress()) !== routerAddr) {
+                    await connectToRouterV5(routerAddr);
+                }
+
+                statusEl.textContent = `Connected: ${routerAddr.slice(0,6)}...${routerAddr.slice(-4)}`;
+                statusEl.style.color = '#22c55e';
+
+                // Refresh chain info and peer status
+                await refreshChainInfo();
+                await refreshPeerStatus();
+            } catch (e) {
+                console.error('LZ Router connection error:', e);
+                statusEl.textContent = 'Connection failed';
+                statusEl.style.color = '#ef4444';
+            }
+        }
+
+        async function refreshChainInfo() {
+            const infoEl = document.getElementById('currentChainInfo');
+
+            if (!provider) {
+                infoEl.innerHTML = '<p style="color: #666;">Connect wallet to see chain info</p>';
+                return;
+            }
+
+            try {
+                const network = await provider.getNetwork();
+                const chainId = Number(network.chainId);
+                const eid = getEidFromChainId(chainId);
+                const chainName = LZ_CHAINS[eid]?.name || 'Unknown';
+
+                let html = `
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <div><strong>Chain:</strong> ${chainName}</div>
+                        <div><strong>Chain ID:</strong> ${chainId}</div>
+                        <div><strong>LayerZero EID:</strong> ${eid || 'Not supported'}</div>
+                `;
+
+                if (routerV5) {
+                    const routerAddr = await routerV5.getAddress();
+                    const lzPaused = await routerV5.lzPaused();
+                    html += `
+                        <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #e5e7eb;">
+                            <strong>Router:</strong> ${routerAddr.slice(0,6)}...${routerAddr.slice(-4)}
+                        </div>
+                        <div><strong>LZ Paused:</strong> <span style="color: ${lzPaused ? '#ef4444' : '#22c55e'};">${lzPaused ? 'Yes ⚠️' : 'No ✓'}</span></div>
+                    `;
+                }
+
+                html += '</div>';
+                infoEl.innerHTML = html;
+            } catch (error) {
+                infoEl.innerHTML = `<p style="color: #ef4444;">Error: ${error.message}</p>`;
+            }
         }
 
         async function setPeer(btn) {
