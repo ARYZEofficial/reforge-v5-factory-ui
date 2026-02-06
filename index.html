@@ -589,7 +589,12 @@
                 </div>
                 <div class="connection-actions">
                     <button class="btn-connect" onclick="connectWallet()">Connect Wallet</button>
-                    <button class="btn-network" onclick="switchToAmoy()">Switch to Amoy</button>
+                    <select id="chainSelector" style="padding: 8px 12px; border-radius: 4px; border: 1px solid #e5e7eb; background: white; cursor: pointer;">
+                        <option value="amoy">Polygon Amoy</option>
+                        <option value="bsc_testnet">BSC Testnet</option>
+                        <option value="sepolia">Sepolia</option>
+                    </select>
+                    <button class="btn-network" onclick="switchToChain()">Switch Chain</button>
                     <span id="connectionStatus" class="status-pill disconnected"><span class="dot"></span>Disconnected</span>
                 </div>
             </div>
@@ -677,6 +682,51 @@
                     <p style="color: #666; text-align: center;">Connect to load tokens</p>
                 </div>
                 <button class="btn btn-secondary" onclick="loadTokens()">Refresh Lists</button>
+            </div>
+
+            <!-- Configure Token for Bridge (One-Click) -->
+            <div class="card" id="configureForBridgeCard">
+                <h2>Configure Token for Bridge <span class="badge badge-role">ONE-CLICK</span></h2>
+                <div class="info-box warning">
+                    After deploying a token, you must:<br>
+                    1. Grant ROUTER_ROLE on the token to the router<br>
+                    2. Add token to router's bridgeable whitelist<br><br>
+                    <strong>This button does both steps automatically.</strong>
+                </div>
+                <div class="form-group">
+                    <label>Token Address</label>
+                    <input type="text" id="configureTokenAddr" placeholder="0x..." />
+                </div>
+                <button class="btn btn-success" onclick="configureTokenForBridge(this)">Configure for Bridge</button>
+                <div id="configureResult" class="result hidden"></div>
+            </div>
+
+            <!-- Check Token Bridge Status -->
+            <div class="card">
+                <h2>Check Token Bridge Status</h2>
+                <div class="help-text" style="margin-bottom: 12px;">
+                    Check if a token has ROUTER_ROLE granted and is in the bridgeable whitelist.
+                </div>
+                <div class="form-group">
+                    <label>Token Address</label>
+                    <input type="text" id="checkStatusTokenAddr" placeholder="0x..." />
+                </div>
+                <button class="btn btn-secondary" onclick="checkTokenBridgeStatus(this)">Check Status</button>
+                <div id="checkStatusResult" class="result hidden"></div>
+            </div>
+
+            <!-- Remove from Whitelist -->
+            <div class="card">
+                <h2>Remove from Whitelist <span class="badge badge-role">ROUTER ADMIN</span></h2>
+                <div class="help-text" style="margin-bottom: 12px;">
+                    Removes a token from the bridgeable whitelist. The token will no longer be bridgeable.
+                </div>
+                <div class="form-group">
+                    <label>Token Address</label>
+                    <input type="text" id="removeWhitelistTokenAddr" placeholder="0x..." />
+                </div>
+                <button class="btn btn-danger" onclick="removeFromBridgeable(this)">Remove from Whitelist</button>
+                <div id="removeWhitelistResult" class="result hidden"></div>
             </div>
 
             <!-- Token Upgrade (Owner Only) -->
@@ -1023,78 +1073,6 @@
                 <button class="btn btn-secondary" onclick="refreshRouterV5Info()">Refresh Router Info</button>
             </div>
 
-            <!-- Configure Token for Bridge (One-Click) -->
-            <div class="card">
-                <h2>Configure Token for Bridge <span class="badge badge-role">ONE-CLICK</span></h2>
-                <div class="info-box warning">
-                    After deploying a token, you must:<br>
-                    1. Grant ROUTER_ROLE on the token to the router<br>
-                    2. Add token to router's bridgeable whitelist<br><br>
-                    <strong>This button does both steps automatically.</strong>
-                </div>
-                <div class="form-group">
-                    <label>Token Address</label>
-                    <input type="text" id="configureTokenAddr" placeholder="0x..." />
-                </div>
-                <button class="btn btn-success" onclick="configureTokenForBridge(this)">Configure for Bridge</button>
-                <div id="configureResult" class="result hidden"></div>
-            </div>
-
-            <!-- Grant ROUTER_ROLE -->
-            <div class="card">
-                <h2>Grant ROUTER_ROLE <span class="badge badge-role">TOKEN ADMIN</span></h2>
-                <div class="help-text" style="margin-bottom: 12px;">
-                    Grants the router permission to mint/burn tokens on behalf of bridge operations.
-                </div>
-                <div class="form-group">
-                    <label>Token Address</label>
-                    <input type="text" id="grantRouterRoleTokenAddr" placeholder="0x..." />
-                </div>
-                <button class="btn btn-primary" onclick="grantRouterRole(this)">Grant ROUTER_ROLE</button>
-                <div id="grantRouterRoleResult" class="result hidden"></div>
-            </div>
-
-            <!-- Add to Whitelist -->
-            <div class="card">
-                <h2>Add to Bridgeable Whitelist <span class="badge badge-role">ROUTER ADMIN</span></h2>
-                <div class="help-text" style="margin-bottom: 12px;">
-                    Adds a token to the router's list of tokens that can be bridged cross-chain.
-                </div>
-                <div class="form-group">
-                    <label>Token Address</label>
-                    <input type="text" id="addWhitelistTokenAddr" placeholder="0x..." />
-                </div>
-                <button class="btn btn-warning" onclick="addToBridgeable(this)">Add to Whitelist</button>
-                <div id="addWhitelistResult" class="result hidden"></div>
-            </div>
-
-            <!-- Check Token Status -->
-            <div class="card">
-                <h2>Check Token Bridge Status</h2>
-                <div class="help-text" style="margin-bottom: 12px;">
-                    Check if a token has ROUTER_ROLE granted and is in the bridgeable whitelist.
-                </div>
-                <div class="form-group">
-                    <label>Token Address</label>
-                    <input type="text" id="checkStatusTokenAddr" placeholder="0x..." />
-                </div>
-                <button class="btn btn-secondary" onclick="checkTokenBridgeStatus(this)">Check Status</button>
-                <div id="checkStatusResult" class="result hidden"></div>
-            </div>
-
-            <!-- Remove from Whitelist -->
-            <div class="card">
-                <h2>Remove from Whitelist <span class="badge badge-role">ROUTER ADMIN</span></h2>
-                <div class="help-text" style="margin-bottom: 12px;">
-                    Removes a token from the bridgeable whitelist. The token will no longer be bridgeable.
-                </div>
-                <div class="form-group">
-                    <label>Token Address</label>
-                    <input type="text" id="removeWhitelistTokenAddr" placeholder="0x..." />
-                </div>
-                <button class="btn btn-danger" onclick="removeFromBridgeable(this)">Remove from Whitelist</button>
-                <div id="removeWhitelistResult" class="result hidden"></div>
-            </div>
 
             <!-- Set Fee Treasury -->
             <div class="card">
@@ -3288,15 +3266,12 @@
                 return;
             }
 
-            // Switch to Router tab
-            switchTab('router');
-
             // Set the token address in the configure input
             document.getElementById('configureTokenAddr').value = lastDeployedToken.tokenAddress;
 
-            // Scroll to the Configure Token for Bridge card (first card with btn-success in Router tab)
+            // Scroll to the Configure Token for Bridge card (in Tokens tab)
             setTimeout(() => {
-                const configureCard = document.querySelector('#router-tab .card:nth-child(3)');
+                const configureCard = document.getElementById('configureForBridgeCard');
                 if (configureCard) {
                     configureCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
@@ -3455,21 +3430,53 @@
             }
         }
 
-        async function switchToAmoy() {
+        // Supported chains configuration
+        const SUPPORTED_CHAINS = {
+            amoy: {
+                chainId: '0x13882', // 80002
+                chainName: 'Polygon Amoy Testnet',
+                nativeCurrency: { name: 'POL', symbol: 'POL', decimals: 18 },
+                rpcUrls: ['https://polygon-amoy-bor-rpc.publicnode.com'],
+                blockExplorerUrls: ['https://amoy.polygonscan.com']
+            },
+            bsc_testnet: {
+                chainId: '0x61', // 97
+                chainName: 'BSC Testnet',
+                nativeCurrency: { name: 'BNB', symbol: 'tBNB', decimals: 18 },
+                rpcUrls: ['https://bsc-testnet.publicnode.com'],
+                blockExplorerUrls: ['https://testnet.bscscan.com']
+            },
+            sepolia: {
+                chainId: '0xaa36a7', // 11155111
+                chainName: 'Sepolia',
+                nativeCurrency: { name: 'Ethereum', symbol: 'ETH', decimals: 18 },
+                rpcUrls: ['https://ethereum-sepolia.publicnode.com'],
+                blockExplorerUrls: ['https://sepolia.etherscan.io']
+            }
+        };
+
+        async function switchToChain() {
             if (!window.ethereum) {
                 alert('MetaMask not detected. Please install MetaMask.');
                 return;
             }
 
-            const amoyChainId = '0x13882'; // 80002 in hex
+            const selector = document.getElementById('chainSelector');
+            const chainKey = selector.value;
+            const chainConfig = SUPPORTED_CHAINS[chainKey];
+
+            if (!chainConfig) {
+                alert('Unknown chain selected');
+                return;
+            }
 
             try {
-                // Try to switch to Amoy
+                // Try to switch to the selected chain
                 await window.ethereum.request({
                     method: 'wallet_switchEthereumChain',
-                    params: [{ chainId: amoyChainId }]
+                    params: [{ chainId: chainConfig.chainId }]
                 });
-                alert('Switched to Polygon Amoy! Click Connect now.');
+                alert(`Switched to ${chainConfig.chainName}! Click Connect now.`);
             } catch (switchError) {
                 // Network doesn't exist, add it
                 if (switchError.code === 4902) {
@@ -3477,18 +3484,14 @@
                         await window.ethereum.request({
                             method: 'wallet_addEthereumChain',
                             params: [{
-                                chainId: amoyChainId,
-                                chainName: 'Polygon Amoy Testnet',
-                                nativeCurrency: {
-                                    name: 'POL',
-                                    symbol: 'POL',
-                                    decimals: 18
-                                },
-                                rpcUrls: ['https://polygon-amoy-bor-rpc.publicnode.com'],
-                                blockExplorerUrls: ['https://amoy.polygonscan.com']
+                                chainId: chainConfig.chainId,
+                                chainName: chainConfig.chainName,
+                                nativeCurrency: chainConfig.nativeCurrency,
+                                rpcUrls: chainConfig.rpcUrls,
+                                blockExplorerUrls: chainConfig.blockExplorerUrls
                             }]
                         });
-                        alert('Polygon Amoy network added! Click Connect now.');
+                        alert(`${chainConfig.chainName} network added! Click Connect now.`);
                     } catch (addError) {
                         alert('Failed to add network: ' + addError.message);
                     }
@@ -3514,6 +3517,7 @@
                 421614n: 'arbitrumSepolia',
                 10n: 'optimism',
                 56n: 'bsc',
+                97n: 'bscTestnet',
                 59144n: 'linea',
                 534352n: 'scroll',
                 81457n: 'blast',
@@ -3538,7 +3542,8 @@
             'baseSepolia': 'https://api-sepolia.basescan.org/api',
             'arbitrum': 'https://api.arbiscan.io/api',
             'optimism': 'https://api-optimistic.etherscan.io/api',
-            'bsc': 'https://api.bscscan.com/api'
+            'bsc': 'https://api.bscscan.com/api',
+            'bscTestnet': 'https://api-testnet.bscscan.com/api'
         };
 
         // Check if a contract is verified on the block explorer
