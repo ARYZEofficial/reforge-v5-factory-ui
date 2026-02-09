@@ -1,0 +1,2003 @@
+[
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_endpoint",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "inputs": [],
+    "name": "AccessControlBadConfirmation",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "neededRole",
+        "type": "bytes32"
+      }
+    ],
+    "name": "AccessControlUnauthorizedAccount",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "target",
+        "type": "address"
+      }
+    ],
+    "name": "AddressEmptyCode",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ECDSAInvalidSignature",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "length",
+        "type": "uint256"
+      }
+    ],
+    "name": "ECDSAInvalidSignatureLength",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "s",
+        "type": "bytes32"
+      }
+    ],
+    "name": "ECDSAInvalidSignatureS",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "implementation",
+        "type": "address"
+      }
+    ],
+    "name": "ERC1967InvalidImplementation",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ERC1967NonPayable",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "FailedCall",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "FurnaceExecuted",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint128",
+        "name": "provided",
+        "type": "uint128"
+      },
+      {
+        "internalType": "uint128",
+        "name": "minimum",
+        "type": "uint128"
+      }
+    ],
+    "name": "GasLimitTooLow",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "balance",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "needed",
+        "type": "uint256"
+      }
+    ],
+    "name": "InsufficientBalance",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "provided",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "required",
+        "type": "uint256"
+      }
+    ],
+    "name": "InsufficientFee",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "validCount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "required",
+        "type": "uint256"
+      }
+    ],
+    "name": "InsufficientValidSignatures",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "InvalidDelegate",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "InvalidEndpointCall",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "InvalidInitialization",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint16",
+        "name": "optionType",
+        "type": "uint16"
+      }
+    ],
+    "name": "InvalidOptionType",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "InvalidPeer",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "InvalidRequiredSignatures",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "LzPaused",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "LzTokenUnavailable",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint32",
+        "name": "eid",
+        "type": "uint32"
+      }
+    ],
+    "name": "NoPeer",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "msgValue",
+        "type": "uint256"
+      }
+    ],
+    "name": "NotEnoughNative",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "NotInitializing",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "addr",
+        "type": "address"
+      }
+    ],
+    "name": "OnlyEndpoint",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint32",
+        "name": "eid",
+        "type": "uint32"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "sender",
+        "type": "bytes32"
+      }
+    ],
+    "name": "OnlyPeer",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
+      }
+    ],
+    "name": "OwnableInvalidOwner",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "OwnableUnauthorizedAccount",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ReentrancyGuardReentrantCall",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint8",
+        "name": "bits",
+        "type": "uint8"
+      },
+      {
+        "internalType": "uint256",
+        "name": "value",
+        "type": "uint256"
+      }
+    ],
+    "name": "SafeCastOverflowedUintDowncast",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      }
+    ],
+    "name": "SafeERC20FailedOperation",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "signer",
+        "type": "address"
+      }
+    ],
+    "name": "SignerExists",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      }
+    ],
+    "name": "TokenAlreadyBridgeable",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      }
+    ],
+    "name": "TokenNotBridgeable",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "UUPSUnauthorizedCallContext",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "slot",
+        "type": "bytes32"
+      }
+    ],
+    "name": "UUPSUnsupportedProxiableUUID",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ZeroAddress",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ZeroAmount",
+    "type": "error"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      }
+    ],
+    "name": "BridgeableTokenAdded",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      }
+    ],
+    "name": "BridgeableTokenRemoved",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [],
+    "name": "EIP712DomainChanged",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "treasury",
+        "type": "address"
+      }
+    ],
+    "name": "FeeTreasuryUpdated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint64",
+        "name": "version",
+        "type": "uint64"
+      }
+    ],
+    "name": "Initialized",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "sender",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "recipient",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint32",
+        "name": "dstEid",
+        "type": "uint32"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "srcContract",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "dstContract",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "bytes",
+        "name": "payload",
+        "type": "bytes"
+      },
+      {
+        "indexed": false,
+        "internalType": "bytes32",
+        "name": "guid",
+        "type": "bytes32"
+      }
+    ],
+    "name": "LzFurnaced",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "bool",
+        "name": "paused",
+        "type": "bool"
+      }
+    ],
+    "name": "LzPauseStateChanged",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint32",
+        "name": "srcEid",
+        "type": "uint32"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "dstContract",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "bytes",
+        "name": "payload",
+        "type": "bytes"
+      },
+      {
+        "indexed": false,
+        "internalType": "bytes32",
+        "name": "guid",
+        "type": "bytes32"
+      }
+    ],
+    "name": "LzReforged",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "previousOwner",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "newOwner",
+        "type": "address"
+      }
+    ],
+    "name": "OwnershipTransferred",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint32",
+        "name": "eid",
+        "type": "uint32"
+      },
+      {
+        "indexed": false,
+        "internalType": "bytes32",
+        "name": "peer",
+        "type": "bytes32"
+      }
+    ],
+    "name": "PeerSet",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "required",
+        "type": "uint256"
+      }
+    ],
+    "name": "RequiredSignaturesUpdated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "role",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "previousAdminRole",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "newAdminRole",
+        "type": "bytes32"
+      }
+    ],
+    "name": "RoleAdminChanged",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "role",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "sender",
+        "type": "address"
+      }
+    ],
+    "name": "RoleGranted",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "role",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "sender",
+        "type": "address"
+      }
+    ],
+    "name": "RoleRevoked",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "fee",
+        "type": "uint256"
+      }
+    ],
+    "name": "SendProtocolFeeUpdated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "signer",
+        "type": "address"
+      }
+    ],
+    "name": "SignerAdded",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "signer",
+        "type": "address"
+      }
+    ],
+    "name": "SignerRemoved",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "treasury",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "TreasuryWithdrawal",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "implementation",
+        "type": "address"
+      }
+    ],
+    "name": "Upgraded",
+    "type": "event"
+  },
+  {
+    "inputs": [],
+    "name": "DEFAULT_ADMIN_ROLE",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "ERC20_FACTORY_ROLE",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "MIN_SEND_GAS_LIMIT",
+    "outputs": [
+      {
+        "internalType": "uint128",
+        "name": "",
+        "type": "uint128"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "PAUSER_ROLE",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "UPGRADER_ROLE",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "UPGRADE_INTERFACE_VERSION",
+    "outputs": [
+      {
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_token",
+        "type": "address"
+      }
+    ],
+    "name": "addBridgeableToken",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_signer",
+        "type": "address"
+      }
+    ],
+    "name": "addSigner",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint32",
+            "name": "srcEid",
+            "type": "uint32"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "sender",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "uint64",
+            "name": "nonce",
+            "type": "uint64"
+          }
+        ],
+        "internalType": "struct Origin",
+        "name": "origin",
+        "type": "tuple"
+      }
+    ],
+    "name": "allowInitializePath",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint32",
+            "name": "srcEid",
+            "type": "uint32"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "sender",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "uint64",
+            "name": "nonce",
+            "type": "uint64"
+          }
+        ],
+        "internalType": "struct Origin",
+        "name": "_origin",
+        "type": "tuple"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "_guid",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "bytes",
+        "name": "_message",
+        "type": "bytes"
+      }
+    ],
+    "name": "clearMessage",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "eip712Domain",
+    "outputs": [
+      {
+        "internalType": "bytes1",
+        "name": "fields",
+        "type": "bytes1"
+      },
+      {
+        "internalType": "string",
+        "name": "name",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "version",
+        "type": "string"
+      },
+      {
+        "internalType": "uint256",
+        "name": "chainId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "verifyingContract",
+        "type": "address"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "salt",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "uint256[]",
+        "name": "extensions",
+        "type": "uint256[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "endpoint",
+    "outputs": [
+      {
+        "internalType": "contract ILayerZeroEndpointV2",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "feeTreasury",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          {
+            "internalType": "address",
+            "name": "account",
+            "type": "address"
+          },
+          {
+            "internalType": "uint32",
+            "name": "dstEid",
+            "type": "uint32"
+          },
+          {
+            "internalType": "address",
+            "name": "srcContract",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "dstContract",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "fee",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "contractType",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bytes",
+            "name": "payload",
+            "type": "bytes"
+          },
+          {
+            "internalType": "bytes",
+            "name": "lzOptions",
+            "type": "bytes"
+          },
+          {
+            "internalType": "string",
+            "name": "comment",
+            "type": "string"
+          },
+          {
+            "components": [
+              {
+                "internalType": "uint256",
+                "name": "deadline",
+                "type": "uint256"
+              },
+              {
+                "internalType": "bytes",
+                "name": "signature",
+                "type": "bytes"
+              }
+            ],
+            "internalType": "struct ReforgeUpgradeable.Signature[]",
+            "name": "signatures",
+            "type": "tuple[]"
+          }
+        ],
+        "internalType": "struct ReforgeUpgradeable.FurnaceParams",
+        "name": "data",
+        "type": "tuple"
+      }
+    ],
+    "name": "furnace",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getFeeTreasury",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getRequiredSignatures",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "role",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getRoleAdmin",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getSendProtocolFee",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getSigners",
+    "outputs": [
+      {
+        "internalType": "address[]",
+        "name": "",
+        "type": "address[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "role",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "grantRole",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "role",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "hasRole",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "initialize",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_token",
+        "type": "address"
+      }
+    ],
+    "name": "isBridgeableToken",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint32",
+            "name": "srcEid",
+            "type": "uint32"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "sender",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "uint64",
+            "name": "nonce",
+            "type": "uint64"
+          }
+        ],
+        "internalType": "struct Origin",
+        "name": "",
+        "type": "tuple"
+      },
+      {
+        "internalType": "bytes",
+        "name": "",
+        "type": "bytes"
+      },
+      {
+        "internalType": "address",
+        "name": "_sender",
+        "type": "address"
+      }
+    ],
+    "name": "isComposeMsgSender",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          {
+            "internalType": "address",
+            "name": "account",
+            "type": "address"
+          },
+          {
+            "internalType": "uint32",
+            "name": "dstEid",
+            "type": "uint32"
+          },
+          {
+            "internalType": "address",
+            "name": "srcContract",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "dstContract",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "fee",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "contractType",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bytes",
+            "name": "payload",
+            "type": "bytes"
+          },
+          {
+            "internalType": "bytes",
+            "name": "lzOptions",
+            "type": "bytes"
+          },
+          {
+            "internalType": "string",
+            "name": "comment",
+            "type": "string"
+          },
+          {
+            "components": [
+              {
+                "internalType": "uint256",
+                "name": "deadline",
+                "type": "uint256"
+              },
+              {
+                "internalType": "bytes",
+                "name": "signature",
+                "type": "bytes"
+              }
+            ],
+            "internalType": "struct ReforgeUpgradeable.Signature[]",
+            "name": "signatures",
+            "type": "tuple[]"
+          }
+        ],
+        "internalType": "struct ReforgeUpgradeable.FurnaceParams",
+        "name": "data",
+        "type": "tuple"
+      }
+    ],
+    "name": "isFurnaceExecuted",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "isLzPaused",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint32",
+        "name": "_eid",
+        "type": "uint32"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "_peer",
+        "type": "bytes32"
+      }
+    ],
+    "name": "isPeer",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "lzPaused",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint32",
+            "name": "srcEid",
+            "type": "uint32"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "sender",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "uint64",
+            "name": "nonce",
+            "type": "uint64"
+          }
+        ],
+        "internalType": "struct Origin",
+        "name": "_origin",
+        "type": "tuple"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "_guid",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "bytes",
+        "name": "_message",
+        "type": "bytes"
+      },
+      {
+        "internalType": "address",
+        "name": "_executor",
+        "type": "address"
+      },
+      {
+        "internalType": "bytes",
+        "name": "_extraData",
+        "type": "bytes"
+      }
+    ],
+    "name": "lzReceive",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint32",
+        "name": "",
+        "type": "uint32"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "name": "nextNonce",
+    "outputs": [
+      {
+        "internalType": "uint64",
+        "name": "nonce",
+        "type": "uint64"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "oAppVersion",
+    "outputs": [
+      {
+        "internalType": "uint64",
+        "name": "",
+        "type": "uint64"
+      },
+      {
+        "internalType": "uint64",
+        "name": "",
+        "type": "uint64"
+      }
+    ],
+    "stateMutability": "pure",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "owner",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint32",
+        "name": "eid",
+        "type": "uint32"
+      }
+    ],
+    "name": "peers",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "peer",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "proxiableUUID",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint32",
+        "name": "dstEid",
+        "type": "uint32"
+      },
+      {
+        "internalType": "address",
+        "name": "recipient",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "dstContract",
+        "type": "address"
+      },
+      {
+        "internalType": "bytes",
+        "name": "payload",
+        "type": "bytes"
+      },
+      {
+        "internalType": "bytes",
+        "name": "lzOptions",
+        "type": "bytes"
+      }
+    ],
+    "name": "quoteFurnace",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "nativeFee",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "recipient",
+        "type": "address"
+      },
+      {
+        "internalType": "bytes",
+        "name": "payload",
+        "type": "bytes"
+      },
+      {
+        "internalType": "uint32",
+        "name": "dstEid",
+        "type": "uint32"
+      },
+      {
+        "internalType": "uint128",
+        "name": "gasLimit",
+        "type": "uint128"
+      }
+    ],
+    "name": "quoteSend",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "lzFee",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "protocolFee",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_token",
+        "type": "address"
+      }
+    ],
+    "name": "removeBridgeableToken",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_signer",
+        "type": "address"
+      }
+    ],
+    "name": "removeSigner",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "renounceOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "role",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "address",
+        "name": "callerConfirmation",
+        "type": "address"
+      }
+    ],
+    "name": "renounceRole",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "requiredSignatures",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint32",
+            "name": "srcEid",
+            "type": "uint32"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "sender",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "uint64",
+            "name": "nonce",
+            "type": "uint64"
+          }
+        ],
+        "internalType": "struct Origin",
+        "name": "_origin",
+        "type": "tuple"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "_guid",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "bytes",
+        "name": "_message",
+        "type": "bytes"
+      },
+      {
+        "internalType": "bytes",
+        "name": "_extraData",
+        "type": "bytes"
+      }
+    ],
+    "name": "retryMessage",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "role",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "revokeRole",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          {
+            "internalType": "address",
+            "name": "token",
+            "type": "address"
+          },
+          {
+            "internalType": "uint32",
+            "name": "dstEid",
+            "type": "uint32"
+          },
+          {
+            "internalType": "address",
+            "name": "recipient",
+            "type": "address"
+          },
+          {
+            "internalType": "uint128",
+            "name": "gasLimit",
+            "type": "uint128"
+          },
+          {
+            "internalType": "bytes",
+            "name": "payload",
+            "type": "bytes"
+          }
+        ],
+        "internalType": "struct ReforgeUpgradeable.SendParams",
+        "name": "params",
+        "type": "tuple"
+      }
+    ],
+    "name": "send",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "sendProtocolFee",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          {
+            "internalType": "address",
+            "name": "token",
+            "type": "address"
+          },
+          {
+            "internalType": "uint32",
+            "name": "dstEid",
+            "type": "uint32"
+          },
+          {
+            "internalType": "address",
+            "name": "recipient",
+            "type": "address"
+          },
+          {
+            "internalType": "uint128",
+            "name": "gasLimit",
+            "type": "uint128"
+          },
+          {
+            "internalType": "bytes",
+            "name": "payload",
+            "type": "bytes"
+          }
+        ],
+        "internalType": "struct ReforgeUpgradeable.SendParams",
+        "name": "params",
+        "type": "tuple"
+      },
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "deadline",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint8",
+            "name": "v",
+            "type": "uint8"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "r",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "s",
+            "type": "bytes32"
+          }
+        ],
+        "internalType": "struct ReforgeUpgradeable.PermitParams",
+        "name": "permit",
+        "type": "tuple"
+      }
+    ],
+    "name": "sendWithPermit",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_delegate",
+        "type": "address"
+      }
+    ],
+    "name": "setDelegate",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_treasury",
+        "type": "address"
+      }
+    ],
+    "name": "setFeeTreasury",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bool",
+        "name": "_paused",
+        "type": "bool"
+      }
+    ],
+    "name": "setLzPaused",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint32",
+        "name": "_eid",
+        "type": "uint32"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "_peer",
+        "type": "bytes32"
+      }
+    ],
+    "name": "setPeer",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_required",
+        "type": "uint256"
+      }
+    ],
+    "name": "setRequiredSignatures",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_fee",
+        "type": "uint256"
+      }
+    ],
+    "name": "setSendProtocolFee",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "signers",
+    "outputs": [
+      {
+        "internalType": "address[]",
+        "name": "",
+        "type": "address[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes4",
+        "name": "interfaceId",
+        "type": "bytes4"
+      }
+    ],
+    "name": "supportsInterface",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "newOwner",
+        "type": "address"
+      }
+    ],
+    "name": "transferOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "newImplementation",
+        "type": "address"
+      },
+      {
+        "internalType": "bytes",
+        "name": "data",
+        "type": "bytes"
+      }
+    ],
+    "name": "upgradeToAndCall",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "withdrawToTreasury",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "stateMutability": "payable",
+    "type": "receive"
+  }
+]
