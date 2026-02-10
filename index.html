@@ -439,6 +439,73 @@ function getProvider() {
     return new ethers.JsonRpcProvider(NETWORKS[currentNetwork].rpc);
 }
 
+// LayerZero message status tracking
+async function trackLzMessage(txHash, resultEl) {
+    const apiBase = 'https://scan-testnet.layerzero-api.com/v1';
+    const scanUrl = `https://testnet.layerzeroscan.com/tx/${txHash}`;
+
+    const statusEmoji = {
+        'INFLIGHT': '✈️',
+        'CONFIRMING': '⏳',
+        'DELIVERED': '✅',
+        'FAILED': '❌',
+        'BLOCKED': '🚫',
+        'PAYLOAD_STORED': '📦'
+    };
+
+    let attempts = 0;
+    const maxAttempts = 60; // 5 minutes max (every 5 seconds)
+
+    const poll = async () => {
+        attempts++;
+        try {
+            const response = await fetch(`${apiBase}/messages/tx/${txHash}`);
+            const data = await response.json();
+
+            if (data.data && data.data.length > 0) {
+                const msg = data.data[0];
+                const status = msg.status?.name || msg.status || 'UNKNOWN';
+                const emoji = statusEmoji[status] || '🔄';
+
+                if (status === 'DELIVERED') {
+                    resultEl.className = 'bridge-result success';
+                    resultEl.innerHTML = `${emoji} <b>Delivered!</b> Tokens received on destination chain.<br>
+                        <a href="${scanUrl}" target="_blank" style="color:inherit">View on LayerZero Scan →</a>`;
+                    return; // Stop polling
+                } else if (status === 'FAILED' || status === 'BLOCKED') {
+                    resultEl.className = 'bridge-result error';
+                    resultEl.innerHTML = `${emoji} <b>${status}</b> - Message failed.<br>
+                        <a href="${scanUrl}" target="_blank" style="color:inherit">View details →</a>`;
+                    return; // Stop polling
+                } else {
+                    resultEl.innerHTML = `${emoji} <b>${status}</b> - Cross-chain message in progress...<br>
+                        <small style="opacity:0.7">Polling ${attempts}/${maxAttempts}</small><br>
+                        <a href="${scanUrl}" target="_blank" style="color:inherit">Track on LayerZero Scan →</a>`;
+                }
+            } else {
+                resultEl.innerHTML = `🔄 Waiting for LayerZero to pick up message...<br>
+                    <small style="opacity:0.7">Polling ${attempts}/${maxAttempts}</small><br>
+                    <a href="${scanUrl}" target="_blank" style="color:inherit">Track on LayerZero Scan →</a>`;
+            }
+
+            if (attempts < maxAttempts) {
+                setTimeout(poll, 5000); // Poll every 5 seconds
+            } else {
+                resultEl.innerHTML = `⏱️ Tracking timeout. Check status manually:<br>
+                    <a href="${scanUrl}" target="_blank" style="color:inherit">View on LayerZero Scan →</a>`;
+            }
+        } catch (e) {
+            console.error('LZ tracking error:', e);
+            if (attempts < maxAttempts) {
+                setTimeout(poll, 5000);
+            }
+        }
+    };
+
+    // Start polling after a short delay to let LZ index the tx
+    setTimeout(poll, 3000);
+}
+
 async function connectWallet() {
     if (!window.ethereum) {
         alert('MetaMask not found');
@@ -999,7 +1066,11 @@ async function executeSend() {
         await tx.wait();
 
         resultEl.className = 'bridge-result success';
-        resultEl.innerHTML = `Success! <a href="https://testnet.layerzeroscan.com/tx/${tx.hash}" target="_blank" style="color:inherit">Track on LayerZero Scan →</a>`;
+        resultEl.innerHTML = `✅ Source tx confirmed! Tracking cross-chain delivery...<br>
+            <a href="https://testnet.layerzeroscan.com/tx/${tx.hash}" target="_blank" style="color:inherit">Track on LayerZero Scan →</a>`;
+
+        // Start tracking LayerZero message status
+        trackLzMessage(tx.hash, resultEl);
     } catch (e) {
         resultEl.className = 'bridge-result error';
         resultEl.textContent = e.reason || e.message || String(e);
@@ -1272,8 +1343,12 @@ async function executeFurnace() {
         await tx.wait();
 
         resultEl.className = 'bridge-result success';
-        resultEl.innerHTML = `Furnace success! <a href="https://testnet.layerzeroscan.com/tx/${tx.hash}" target="_blank" style="color:inherit">Track on LayerZero Scan →</a>`;
+        resultEl.innerHTML = `✅ Furnace tx confirmed! Tracking cross-chain delivery...<br>
+            <a href="https://testnet.layerzeroscan.com/tx/${tx.hash}" target="_blank" style="color:inherit">Track on LayerZero Scan →</a>`;
         furnaceSignatureData = null;
+
+        // Start tracking LayerZero message status
+        trackLzMessage(tx.hash, resultEl);
     } catch (e) {
         resultEl.className = 'bridge-result error';
         resultEl.textContent = e.reason || e.message || String(e);
